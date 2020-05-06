@@ -1,0 +1,1 @@
+{"ast":null,"code":"import { PageHome } from \"../modules/page-home/page-home.component\";\nexport default PageHome;","map":null,"metadata":{},"sourceType":"module"}

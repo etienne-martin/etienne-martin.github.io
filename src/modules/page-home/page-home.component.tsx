@@ -8,16 +8,14 @@ export const PageHome: FC = () => {
   return (
     <>
       <Head>
-        <title>hello - etienne-martin</title>
+        <title>hello world - etienne-martin</title>
       </Head>
       <MainLayout>
         <Heading component="h1" gutterBottom>
-          Ethical browser fingerprinting
+          Etienne Martin
         </Heading>
         <Text component="p" variant="h4">
-          Infrastructure as code for provisioning, compliance, and management of
-          any cloud, infrastructure, and service. Secure your application while
-          respecting user privacy.
+          hello world
         </Text>
       </MainLayout>
     </>

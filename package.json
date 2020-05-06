@@ -9,7 +9,8 @@
     "prebuild": "yarn cleanup",
     "build": "next build && next export -o ./dist/out",
     "cleanup": "rm -rf dist/",
-    "serve": "serve -p 8080 ./dist/out"
+    "serve": "serve -p 8080 ./dist/out",
+    "deploy": "sh tools/deploy.sh"
   },
   "dependencies": {
     "next": "^9.1.3",
