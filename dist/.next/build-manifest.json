@@ -4,25 +4,25 @@
     "/": [
       "static/runtime/webpack-04e5fe7718eb42f772cd.js",
       "static/chunks/commons.06764b2b0fec5c760bc4.js",
-      "static/runtime/main-40d5f432b80ee58babe9.js"
+      "static/runtime/main-2972b8378a04c7f8d8a6.js"
     ],
     "/_app": [
       "static/runtime/webpack-04e5fe7718eb42f772cd.js",
       "static/chunks/commons.06764b2b0fec5c760bc4.js",
-      "static/runtime/main-40d5f432b80ee58babe9.js"
+      "static/runtime/main-2972b8378a04c7f8d8a6.js"
     ],
     "/_error": [
       "static/runtime/webpack-04e5fe7718eb42f772cd.js",
       "static/chunks/commons.06764b2b0fec5c760bc4.js",
-      "static/runtime/main-40d5f432b80ee58babe9.js"
+      "static/runtime/main-2972b8378a04c7f8d8a6.js"
     ],
     "/_polyfills": [
-      "static/runtime/polyfills-9f10fdc49b809a20949c.js"
+      "static/runtime/polyfills-66dd50f9cea9379e1f8d.js"
     ],
     "/index": [
       "static/runtime/webpack-04e5fe7718eb42f772cd.js",
       "static/chunks/commons.06764b2b0fec5c760bc4.js",
-      "static/runtime/main-40d5f432b80ee58babe9.js"
+      "static/runtime/main-2972b8378a04c7f8d8a6.js"
     ]
   }
 }
