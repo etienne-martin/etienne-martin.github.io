@@ -7,11 +7,11 @@
     "byName": {
       "static/runtime/webpack.js": 0,
       "commons": 1,
-      "static/K9f4gQ8jFqACR_7LzOPkk/pages/_app.js": 2,
-      "static/K9f4gQ8jFqACR_7LzOPkk/pages/_error.js": 3,
-      "static/K9f4gQ8jFqACR_7LzOPkk/pages/index.js": 4,
-      "static/runtime/main.js": 5,
-      "static/runtime/polyfills.js": 6
+      "static/runtime/main.js": 2,
+      "static/runtime/polyfills.js": 3,
+      "static/tZPOz0PG8OZJRkaHz50va/pages/_app.js": 4,
+      "static/tZPOz0PG8OZJRkaHz50va/pages/_error.js": 5,
+      "static/tZPOz0PG8OZJRkaHz50va/pages/index.js": 6
     },
     "bySource": {},
     "usedIds": [
