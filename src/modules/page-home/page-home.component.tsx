@@ -7,7 +7,7 @@ export const PageHome: FC = () => {
   return (
     <>
       <Head>
-        <title>Etienne Martin, Web Architect</title>
+        <title>Etienne Martin – Web Architect</title>
       </Head>
       <Layout>
         <Heading component="h1">
