@@ -4576,7 +4576,7 @@ var __jsx = react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement;
 var StyledLayout = styled_components__WEBPACK_IMPORTED_MODULE_3__["default"].div.withConfig({
   displayName: "layoutcomponent__StyledLayout",
   componentId: "sc-1hn9aph-0"
-})(["height:100%;display:flex;flex-flow:column;padding:75px 100px;@media only screen and (max-width:768px){padding:30px 40px;}@media only screen and (max-width:320px){padding:30px;}"]);
+})(["height:100%;display:flex;flex-flow:column;padding:75px 100px;@media only screen and (max-width:768px){padding:30px 40px;}@media only screen and (max-width:375px){padding:30px 35px;}@media only screen and (max-width:320px){padding:30px;}"]);
 var Content = styled_components__WEBPACK_IMPORTED_MODULE_3__["default"].main.withConfig({
   displayName: "layoutcomponent__Content",
   componentId: "sc-1hn9aph-1"
@@ -4588,31 +4588,31 @@ var Layout = function Layout(_ref) {
   return __jsx(StyledLayout, Object(_babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, otherProps, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 30
+      lineNumber: 34
     },
     __self: this
   }), __jsx(_header_header_component__WEBPACK_IMPORTED_MODULE_4__["Header"], {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 31
+      lineNumber: 35
     },
     __self: this
   }), __jsx(Content, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 32
+      lineNumber: 36
     },
     __self: this
   }, __jsx("div", {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 33
+      lineNumber: 37
     },
     __self: this
   }, children)), __jsx(_footer_footer_component__WEBPACK_IMPORTED_MODULE_5__["Footer"], {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 35
+      lineNumber: 39
     },
     __self: this
   }));

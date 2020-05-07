@@ -329,7 +329,7 @@ function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) r
 const StyledLayout = styled_components__WEBPACK_IMPORTED_MODULE_1___default.a.div.withConfig({
   displayName: "layoutcomponent__StyledLayout",
   componentId: "sc-1hn9aph-0"
-})(["height:100%;display:flex;flex-flow:column;padding:75px 100px;@media only screen and (max-width:768px){padding:30px 40px;}@media only screen and (max-width:320px){padding:30px;}"]);
+})(["height:100%;display:flex;flex-flow:column;padding:75px 100px;@media only screen and (max-width:768px){padding:30px 40px;}@media only screen and (max-width:375px){padding:30px 35px;}@media only screen and (max-width:320px){padding:30px;}"]);
 const Content = styled_components__WEBPACK_IMPORTED_MODULE_1___default.a.main.withConfig({
   displayName: "layoutcomponent__Content",
   componentId: "sc-1hn9aph-1"
@@ -343,31 +343,31 @@ const Layout = (_ref) => {
   return __jsx(StyledLayout, _extends({}, otherProps, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 30
+      lineNumber: 34
     },
     __self: undefined
   }), __jsx(_header_header_component__WEBPACK_IMPORTED_MODULE_2__["Header"], {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 31
+      lineNumber: 35
     },
     __self: undefined
   }), __jsx(Content, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 32
+      lineNumber: 36
     },
     __self: undefined
   }, __jsx("div", {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 33
+      lineNumber: 37
     },
     __self: undefined
   }, children)), __jsx(_footer_footer_component__WEBPACK_IMPORTED_MODULE_3__["Footer"], {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 35
+      lineNumber: 39
     },
     __self: undefined
   }));

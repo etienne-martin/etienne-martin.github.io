@@ -7858,7 +7858,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function _templateObject() {
-  var data = Object(_babel_runtime_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_0__["default"])(["\n  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');\n  \n  ::selection {\n    background: #8a3af4; /* WebKit/Blink Browsers */\n  }\n  ::-moz-selection {\n    background: #8a3af4; /* Gecko Browsers */\n  }\n\n  ", "\n"]);
+  var data = Object(_babel_runtime_helpers_esm_taggedTemplateLiteral__WEBPACK_IMPORTED_MODULE_0__["default"])(["\n  ::selection {\n    background: #8a3af4; /* WebKit/Blink Browsers */\n  }\n  ::-moz-selection {\n    background: #8a3af4; /* Gecko Browsers */\n  }\n\n  ", "\n"]);
 
   _templateObject = function _templateObject() {
     return data;

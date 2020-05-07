@@ -403,8 +403,6 @@ const theme = {
   cornerRadius: 4
 };
 const GlobalStyle = styled_components__WEBPACK_IMPORTED_MODULE_0__["createGlobalStyle"]`
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-  
   ::selection {
     background: #8a3af4; /* WebKit/Blink Browsers */
   }

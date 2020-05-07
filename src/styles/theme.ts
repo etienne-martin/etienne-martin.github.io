@@ -135,8 +135,6 @@ export const theme = {
 };
 
 export const GlobalStyle = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-  
   ::selection {
     background: #8a3af4; /* WebKit/Blink Browsers */
   }

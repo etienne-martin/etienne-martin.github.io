@@ -39,6 +39,10 @@ export default class MyDocument extends Document {
             name="description"
             content="A personal website, because apparently I need one."
           />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
+            rel="stylesheet"
+          />
         </Head>
         <body>
           <Main />
