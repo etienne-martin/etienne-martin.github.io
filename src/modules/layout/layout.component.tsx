@@ -7,17 +7,22 @@ const StyledLayout = styled.div`
   height: 100%;
   display: flex;
   flex-flow: column;
+  padding: 75px 100px;
 `;
 
 const Content = styled.main`
   flex-grow: 1;
+  display: flex;
+  align-items: center;
 `;
 
-export const MainLayout: FC = ({ children, ...otherProps }) => {
+export const Layout: FC = ({ children, ...otherProps }) => {
   return (
     <StyledLayout {...otherProps}>
       <Header />
-      <Content>{children}</Content>
+      <Content>
+        <div>{children}</div>
+      </Content>
       <Footer />
     </StyledLayout>
   );

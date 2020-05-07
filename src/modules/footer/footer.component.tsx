@@ -1,12 +1,21 @@
 import React, { FC } from "react";
 import styled from "styled-components";
+import { Text } from "../../catalog/text/text.component";
 
-const StyledFooter = styled.footer`
-  background: #000;
-  padding: 0 30px;
-  position: relative;
-`;
+const StyledFooter = styled.footer``;
 
 export const Footer: FC = ({ ...otherProps }) => {
-  return <StyledFooter {...otherProps}>footer</StyledFooter>;
+  return (
+    <StyledFooter {...otherProps}>
+      <Text component="p" variant="mono">
+        <a
+          href="https://www.npmjs.com/package/emartin"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          npm install -g emartin
+        </a>
+      </Text>
+    </StyledFooter>
+  );
 };

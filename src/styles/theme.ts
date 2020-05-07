@@ -9,8 +9,7 @@ declare module "styled-components" {
 }
 
 const fonts = {
-  sans:
-    "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif",
+  sans: "'Bebas Neue', cursive, Helvetica, Arial, sans-serif",
   mono: "SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace"
 };
 
@@ -21,10 +20,10 @@ const fontWeights = {
 };
 
 const colors = {
-  primary: "#5003fa",
+  primary: "#8a3af4",
   secondary: "#000",
   tertiary: "#2AA1A1",
-  textPrimary: "#000",
+  textPrimary: "#fff",
   textSecondary: "#666",
   textTertiary: "#999",
   error: "#f44336",
@@ -35,43 +34,49 @@ const colors = {
 
 const h1: any = css`
   font-family: ${fonts.sans};
-  font-size: 60px;
-  font-weight: ${fontWeights.bold};
+  font-size: 10vw;
+  font-weight: normal;
+  line-height: 1em;
   color: ${colors.textPrimary};
 `;
 
 const h2: any = css`
   font-family: ${fonts.sans};
   font-size: 48px;
-  font-weight: ${fontWeights.bold};
+  font-weight: normal;
+  line-height: 1em;
   color: ${colors.textPrimary};
 `;
 
 const h3: any = css`
   font-family: ${fonts.sans};
   font-size: 36px;
-  font-weight: ${fontWeights.bold};
+  font-weight: normal;
+  line-height: 1em;
   color: ${colors.textPrimary};
 `;
 
 const h4: any = css`
   font-family: ${fonts.sans};
   font-size: 24px;
-  font-weight: ${fontWeights.bold};
+  font-weight: normal;
+  line-height: 1em;
   color: ${colors.textPrimary};
 `;
 
 const h5: any = css`
   font-family: ${fonts.sans};
   font-size: 18px;
-  font-weight: 700;
+  font-weight: normal;
+  line-height: 1em;
   color: ${colors.textPrimary};
 `;
 
 const h6: any = css`
   font-family: ${fonts.sans};
   font-size: 16px;
-  font-weight: ${fontWeights.bold};
+  font-weight: normal;
+  line-height: 1em;
   color: ${colors.textPrimary};
 `;
 
@@ -83,13 +88,13 @@ const button: any = css`
 
 const body: any = css`
   font-family: ${fonts.sans};
-  font-size: 14px;
+  font-size: 18px;
   font-weight: ${fontWeights.regular};
 `;
 
 const caption: any = css`
   font-family: ${fonts.sans};
-  font-size: 12px;
+  font-size: 14px;
   font-weight: ${fontWeights.regular};
 `;
 
@@ -130,6 +135,15 @@ export const theme = {
 };
 
 export const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+  
+  ::selection {
+    background: #8a3af4; /* WebKit/Blink Browsers */
+  }
+  ::-moz-selection {
+    background: #8a3af4; /* Gecko Browsers */
+  }
+
   ${({ theme }) => css`
     * {
       padding: 0;
@@ -147,6 +161,7 @@ export const GlobalStyle = createGlobalStyle`
     }
 
     body {
+      background: #1b1b1b;
       color: ${theme.colors.textSecondary};
       ${theme.typography.body};
       cursor: default;
