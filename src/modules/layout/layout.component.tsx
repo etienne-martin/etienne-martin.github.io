@@ -4,7 +4,7 @@ import { Header } from "../header/header.component";
 import { Footer } from "../footer/footer.component";
 
 const StyledLayout = styled.div`
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-flow: column;
   padding: 75px 100px;
