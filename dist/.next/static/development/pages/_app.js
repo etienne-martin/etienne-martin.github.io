@@ -7883,8 +7883,8 @@ var colors = {
   secondary: "#000",
   tertiary: "#2AA1A1",
   textPrimary: "#fff",
-  textSecondary: "#666",
-  textTertiary: "#999",
+  textSecondary: "#999",
+  textTertiary: "#666",
   error: "#f44336",
   warning: "#ff9800",
   info: "#2196f3",
@@ -7931,7 +7931,7 @@ var theme = {
 };
 var GlobalStyle = Object(styled_components__WEBPACK_IMPORTED_MODULE_1__["createGlobalStyle"])(_templateObject(), function (_ref) {
   var theme = _ref.theme;
-  return Object(styled_components__WEBPACK_IMPORTED_MODULE_1__["css"])(["*{padding:0;margin:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}html,body,#__next{height:100%;min-width:320px;}body{background:#1b1b1b;color:", ";", ";cursor:default;-webkit-tap-highlight-color:rgba(0,0,0,0);-webkit-text-size-adjust:none;}strong{font-weight:", ";}a{color:", ";text-decoration:none;transition:color ", "s;&:hover{color:", ";}}button{cursor:pointer;}"], theme.colors.textSecondary, theme.typography.body, theme.fontWeights.bold, theme.colors.textSecondary, theme.transition.fast, theme.colors.textPrimary);
+  return Object(styled_components__WEBPACK_IMPORTED_MODULE_1__["css"])(["*{padding:0;margin:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}html,body,#__next{height:100%;min-width:320px;}body{background:#1b1b1b;color:", ";", ";cursor:default;-webkit-tap-highlight-color:rgba(0,0,0,0);-webkit-text-size-adjust:none;}strong{font-weight:", ";}a{color:", ";text-decoration:none;transition:color ", "s;&:hover{color:", ";}}button{cursor:pointer;}"], theme.colors.textPrimary, theme.typography.body, theme.fontWeights.bold, theme.colors.textSecondary, theme.transition.fast, theme.colors.textPrimary);
 });
 
 /***/ }),

@@ -34,11 +34,14 @@ export default class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
-          <title>Etienne Martin, Web Architect</title>
           <meta
             name="description"
             content="A personal website, because apparently I need one."
           />
+          <meta name="theme-color" content="#1b1b1b" />
+          <link rel="icon" href="/favicon.svg" />
+          <link rel="mask-icon" href="/mask-icon.svg" color="#1b1b1b" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           <link
             href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
             rel="stylesheet"

@@ -942,18 +942,45 @@ class MyDocument extends next_document__WEBPACK_IMPORTED_MODULE_1___default.a {
         lineNumber: 36
       },
       __self: this
-    }, __jsx("title", {
+    }, __jsx("meta", {
+      name: "description",
+      content: "A personal website, because apparently I need one.",
       __source: {
         fileName: _jsxFileName,
         lineNumber: 37
       },
       __self: this
-    }, "Etienne Martin, Web Architect"), __jsx("meta", {
-      name: "description",
-      content: "A personal website, because apparently I need one.",
+    }), __jsx("meta", {
+      name: "theme-color",
+      content: "#1b1b1b",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 38
+        lineNumber: 41
+      },
+      __self: this
+    }), __jsx("link", {
+      rel: "icon",
+      href: "/favicon.svg",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 42
+      },
+      __self: this
+    }), __jsx("link", {
+      rel: "mask-icon",
+      href: "/mask-icon.svg",
+      color: "#1b1b1b",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 43
+      },
+      __self: this
+    }), __jsx("link", {
+      rel: "apple-touch-icon",
+      href: "/apple-touch-icon.png",
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 44
       },
       __self: this
     }), __jsx("link", {
@@ -961,25 +988,25 @@ class MyDocument extends next_document__WEBPACK_IMPORTED_MODULE_1___default.a {
       rel: "stylesheet",
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 42
+        lineNumber: 45
       },
       __self: this
     })), __jsx("body", {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 47
+        lineNumber: 50
       },
       __self: this
     }, __jsx(next_document__WEBPACK_IMPORTED_MODULE_1__["Main"], {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 48
+        lineNumber: 51
       },
       __self: this
     }), __jsx(next_document__WEBPACK_IMPORTED_MODULE_1__["NextScript"], {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 49
+        lineNumber: 52
       },
       __self: this
     })));

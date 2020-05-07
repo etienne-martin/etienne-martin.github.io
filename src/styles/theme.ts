@@ -24,8 +24,8 @@ const colors = {
   secondary: "#000",
   tertiary: "#2AA1A1",
   textPrimary: "#fff",
-  textSecondary: "#666",
-  textTertiary: "#999",
+  textSecondary: "#999",
+  textTertiary: "#666",
   error: "#f44336",
   warning: "#ff9800",
   info: "#2196f3",
@@ -160,7 +160,7 @@ export const GlobalStyle = createGlobalStyle`
 
     body {
       background: #1b1b1b;
-      color: ${theme.colors.textSecondary};
+      color: ${theme.colors.textPrimary};
       ${theme.typography.body};
       cursor: default;
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
