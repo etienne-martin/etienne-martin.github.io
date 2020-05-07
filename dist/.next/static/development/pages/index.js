@@ -4653,7 +4653,7 @@ var PageHome = function PageHome() {
       lineNumber: 8
     },
     __self: this
-  }, "I make websites", __jsx("br", {
+  }, "I make computers", __jsx("br", {
     __source: {
       fileName: _jsxFileName,
       lineNumber: 10

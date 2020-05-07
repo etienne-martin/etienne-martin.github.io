@@ -6,7 +6,7 @@ export const PageHome: FC = () => {
   return (
     <Layout>
       <Heading component="h1">
-        I make websites
+        I make computers
         <br />
         go brrrrrr_
       </Heading>

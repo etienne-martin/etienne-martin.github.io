@@ -408,7 +408,7 @@ const PageHome = () => {
       lineNumber: 8
     },
     __self: undefined
-  }, "I make websites", __jsx("br", {
+  }, "I make computers", __jsx("br", {
     __source: {
       fileName: _jsxFileName,
       lineNumber: 10
