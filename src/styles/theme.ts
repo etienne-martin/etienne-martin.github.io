@@ -174,7 +174,7 @@ export const GlobalStyle = createGlobalStyle`
     }
 
     a {
-      color: ${theme.colors.primary};
+      color: ${theme.colors.textPrimary};
       text-decoration: none;
     }
 
