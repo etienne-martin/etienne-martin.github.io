@@ -8,12 +8,21 @@ const StyledLayout = styled.div`
   display: flex;
   flex-flow: column;
   padding: 75px 100px;
+
+  @media only screen and (max-width: 768px) {
+    padding: 30px 40px;
+  }
+
+  @media only screen and (max-width: 320px) {
+    padding: 30px;
+  }
 `;
 
 const Content = styled.main`
   flex-grow: 1;
   display: flex;
   align-items: center;
+  padding: 60px 0;
 `;
 
 export const Layout: FC = ({ children, ...otherProps }) => {

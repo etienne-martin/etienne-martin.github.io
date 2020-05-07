@@ -174,8 +174,13 @@ export const GlobalStyle = createGlobalStyle`
     }
 
     a {
-      color: ${theme.colors.textPrimary};
+      color: ${theme.colors.textSecondary};
       text-decoration: none;
+      transition: color ${theme.transition.fast}s;
+
+      &:hover {
+        color: ${theme.colors.textPrimary};
+      }
     }
 
     button {
