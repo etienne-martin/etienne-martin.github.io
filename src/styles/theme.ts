@@ -36,7 +36,7 @@ const h1: any = css`
   font-family: ${fonts.sans};
   font-size: 10vw;
   font-weight: normal;
-  line-height: 1em;
+  line-height: 0.9em;
   color: ${colors.textPrimary};
 `;
 
