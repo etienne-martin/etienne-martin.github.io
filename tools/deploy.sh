@@ -8,6 +8,6 @@ yarn install
 yarn build
 touch dist/out/.nojekyll
 echo 'etiennemartin.ca' > dist/out/CNAME
-git add dist/*
+git add dist/* -f
 git commit -m "Release at $(date)"
 git subtree push --prefix dist/out origin master
