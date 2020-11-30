@@ -17,9 +17,13 @@ export const PageNotFound: FC = () => {
   const [shouldShowUnderscore, setShouldShowUnderscore] = useState(true);
 
   useEffect(() => {
-    setInterval(() => {
+    const interval = setInterval(() => {
       setShouldShowUnderscore(shouldShowUnderscore => !shouldShowUnderscore);
     }, 500);
+
+    return () => {
+      clearInterval(interval);
+    }
   }, []);
 
   return (

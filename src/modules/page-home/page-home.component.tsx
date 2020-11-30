@@ -1,15 +1,19 @@
 import React, { FC, useEffect, useState } from "react";
+import Head from "next/head";
 import { Layout } from "../layout/layout.component";
 import { Heading } from "../../catalog/heading/heading.component";
-import Head from "next/head";
 
 export const PageHome: FC = () => {
   const [shouldShowUnderscore, setShouldShowUnderscore] = useState(true);
 
   useEffect(() => {
-    setInterval(() => {
+    const interval = setInterval(() => {
       setShouldShowUnderscore(shouldShowUnderscore => !shouldShowUnderscore);
     }, 500);
+
+    return () => {
+      clearInterval(interval);
+    }
   }, []);
 
   return (
