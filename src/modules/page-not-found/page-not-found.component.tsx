@@ -23,7 +23,7 @@ export const PageNotFound: FC = () => {
 
     return () => {
       clearInterval(interval);
-    }
+    };
   }, []);
 
   return (

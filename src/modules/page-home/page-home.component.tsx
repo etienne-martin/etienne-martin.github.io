@@ -13,7 +13,7 @@ export const PageHome: FC = () => {
 
     return () => {
       clearInterval(interval);
-    }
+    };
   }, []);
 
   return (
