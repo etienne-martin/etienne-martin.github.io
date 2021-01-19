@@ -9,7 +9,7 @@ declare module "styled-components" {
 }
 
 const fonts = {
-  sans: "'Bebas Neue', cursive, Helvetica, Arial, sans-serif",
+  sans: "'Bebas Neue', Helvetica, Arial, sans-serif",
   mono: "SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace"
 };
 
