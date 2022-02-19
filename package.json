@@ -2,7 +2,7 @@
   "name": "etienne-martin.github.io",
   "version": "1.0.0",
   "engines": {
-    "node": "12.6"
+    "node": "16.14"
   },
   "scripts": {
     "dev": "sh tools/dev.sh",
