@@ -3,20 +3,29 @@ import Link from "next/link";
 import React from "react";
 import { glob } from "../utils/glob";
 
-interface ArticlesHomeProps {
-  pages: string[];
+interface Article {
+  slug: string;
+  metadata: {
+    title: string;
+    date: string;
+    image: string;
+  };
 }
 
-const BlogHome: NextPage<ArticlesHomeProps> = ({ pages }) => {
+interface HomepageProps {
+  articles: Article[];
+}
+
+const Homepage: NextPage<HomepageProps> = ({ articles }) => {
   return (
     <div>
       <h1>Articles</h1>
 
       <ul>
-        {pages.map((page) => (
-          <li key={page}>
-            <Link href={page}>
-              <a>{page}</a>
+        {articles.map(({ slug, metadata }) => (
+          <li key={slug}>
+            <Link href={slug}>
+              <a>{metadata.title}</a>
             </Link>
           </li>
         ))}
@@ -25,20 +34,28 @@ const BlogHome: NextPage<ArticlesHomeProps> = ({ pages }) => {
   );
 };
 
-export const getStaticProps: GetStaticProps<ArticlesHomeProps> = async () => {
+export const getStaticProps: GetStaticProps<HomepageProps> = async () => {
   const pages = await glob("**/*.mdx", {
     cwd: `${process.cwd()}/src/pages`,
   });
 
-  const slugs = pages.map((page) => {
-    return `/${page.replace(/(index)?\.mdx$/, "")}`;
-  });
+  const articles = await Promise.all(
+    pages.map(async (page) => {
+      const slug = `/${page.replace(/(index)?\.mdx$/, "")}`;
+      const { metadata } = await import(`./${page}`);
+
+      return {
+        slug,
+        metadata,
+      };
+    })
+  );
 
   return {
     props: {
-      pages: slugs,
+      articles,
     },
   };
 };
 
-export default BlogHome;
+export default Homepage;
