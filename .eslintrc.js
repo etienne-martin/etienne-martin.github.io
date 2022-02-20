@@ -1,51 +1,54 @@
 module.exports = {
+  root: true,
   parser: "@typescript-eslint/parser",
   extends: [
-    "plugin:@typescript-eslint/recommended",
+    "eslint:recommended",
     "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended",
     "prettier",
-    "prettier/@typescript-eslint",
-    "prettier/react"
+    "next", // must be last
   ],
-  plugins: ["@typescript-eslint", "react"],
+  plugins: ["@typescript-eslint", "prettier", "react-hooks"],
   parserOptions: {
     ecmaVersion: 2018,
     sourceType: "module",
     ecmaFeatures: {
-      jsx: true
-    }
-  },
-  rules: {
-    "padding-line-between-statements": [
-      "error",
-      // newline-after-var
-      { blankLine: "always", prev: ["const", "let", "var"], next: "*" },
-      {
-        blankLine: "any",
-        prev: ["const", "let", "var"],
-        next: ["const", "let", "var"]
-      },
-      // newline-before-return
-      { blankLine: "always", prev: "*", next: "return" },
-      // lines-around-directive
-      { blankLine: "always", prev: "directive", next: "*" },
-      { blankLine: "any", prev: "directive", next: "directive" }
-    ],
-    "@typescript-eslint/explicit-function-return-type": 0,
-    "@typescript-eslint/explicit-member-accessibility": 0,
-    "@typescript-eslint/no-use-before-define": 0,
-    "@typescript-eslint/no-explicit-any": 0,
-    "@typescript-eslint/no-var-requires": 0,
-    "@typescript-eslint/prefer-optional-chain": 1,
-    "react/prop-types": 0,
-    "@typescript-eslint/no-non-null-assertion": 0,
-    "react/display-name": 0,
-    "object-shorthand": 1
+      jsx: true,
+    },
   },
   settings: {
     react: {
-      version: "detect"
-    }
-  }
+      version: "^16.9.0",
+    },
+  },
+  env: {
+    browser: true,
+    node: true,
+    es6: true,
+    jest: true,
+  },
+  rules: {
+    "@typescript-eslint/interface-name-prefix": 0,
+    "@typescript-eslint/explicit-function-return-type": 0,
+    "@typescript-eslint/explicit-module-boundary-types": 0,
+    "@typescript-eslint/no-non-null-assertion": 0,
+    "@typescript-eslint/no-use-before-define": 0,
+    "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/no-var-requires": 0,
+    "@typescript-eslint/no-namespace": 0,
+    "require-atomic-updates": "off",
+    "object-shorthand": ["error", "always"],
+    eqeqeq: 2,
+    "no-restricted-imports": [
+      "error",
+      {
+        // Prevent people from importing the whole SDK
+        paths: ["aws-sdk"],
+      },
+    ],
+    "react-hooks/exhaustive-deps": 2,
+    "@next/next/no-img-element": 0,
+    "@next/next/no-css-tags": 0,
+  },
 };

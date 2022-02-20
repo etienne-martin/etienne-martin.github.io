@@ -1,3 +1,5 @@
-import { PageNotFound } from "../modules/page-not-found/page-not-found.component";
+const NotFoundPage = () => {
+  return <div>404</div>;
+};
 
-export default PageNotFound;
+export default NotFoundPage;

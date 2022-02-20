@@ -1,17 +1,25 @@
-import App from "next/app";
 import React from "react";
-import { ThemeProvider } from "styled-components";
-import { theme, GlobalStyle } from "../styles/theme";
+import App from "next/app";
+import { ThemeProvider } from "next-themes";
 
-export default class MyApp extends App {
+import "../style.css";
+import { Layout } from "../modules/Layout/Layout";
+import { MdxProvider } from "../modules/MdxProvider";
+
+class MyApp extends App {
   render() {
     const { Component, pageProps } = this.props;
 
     return (
-      <ThemeProvider theme={theme}>
-        <GlobalStyle />
-        <Component {...pageProps} />
+      <ThemeProvider defaultTheme="system">
+        <MdxProvider>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </MdxProvider>
       </ThemeProvider>
     );
   }
 }
+
+export default MyApp;

@@ -1,56 +1,37 @@
-const TerserPlugin = require("terser-webpack-plugin");
+const withLinaria = require("next-linaria");
 const CircularDependencyPlugin = require("circular-dependency-plugin");
 
-module.exports = () => {
-  const nextConfig = {
-    distDir: "./dist/.next",
-    devIndicators: {
-      autoPrerender: false
+const withMDX = require("@next/mdx")({
+  extension: /\.mdx?$/,
+  options: {
+    remarkPlugins: [],
+    rehypePlugins: [],
+    providerImportSource: "@mdx-js/react",
+  },
+});
+
+const config = {
+  pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
+  distDir: "./dist/.next",
+  devIndicators: {
+    autoPrerender: false,
+  },
+  eslint: {
+    dirs: ["src"],
+  },
+  webpack: (config, { dev: isDev }) => {
+    if (!isDev) {
+      config.plugins.push(
+        new CircularDependencyPlugin({
+          exclude: /node_modules/,
+          failOnError: true,
+          cwd: process.cwd(),
+        })
+      );
     }
-  };
-
-  const webpack = (config, { dev: isDev }) => {
-    config.module.rules.push({
-      test: /\.(jsx?|tsx?)$/,
-      exclude: [/node_modules/],
-      enforce: "pre",
-      use: [
-        {
-          loader: "eslint-loader",
-          options: {
-            emitWarning: true,
-            emitError: !isDev
-          }
-        }
-      ]
-    });
-
-    config.optimization.minimizer.push(
-      new TerserPlugin({
-        terserOptions: {
-          compress: {
-            drop_console: !isDev
-          },
-          output: {
-            comments: false
-          }
-        }
-      })
-    );
-
-    config.plugins.push(
-      new CircularDependencyPlugin({
-        exclude: /node_modules/,
-        failOnError: !isDev,
-        cwd: process.cwd()
-      })
-    );
 
     return config;
-  };
-
-  return {
-    ...nextConfig,
-    webpack
-  };
+  },
 };
+
+module.exports = withLinaria(withMDX(config));
