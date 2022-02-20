@@ -1,0 +1,138 @@
+import { ArticleLayout } from "../../../modules/ArticleLayout";
+import mainImage from "./browser.png";
+
+# Let the browser do it for you
+
+<Image alt="A browser browser lifting weights" src={mainImage.src} />
+
+Browsers are an _incredible_ piece of engineering. Heavy listing, re-invent the wheel.
+
+This is a **non-exhaustive** list.
+
+- Mention that it's not always possible to rely on the techniques highlighted here if you have an isomorphic application.
+- scroll snapping
+- encryption
+- smooth scrolling
+
+Mention that it's not always possible to rely on the techniques highlighted here if you have an isomorphic application.
+
+The advantage of these approaches:
+
+No need to add yet another library which would increase the size of your JavaScript bundle.
+
+- Robustness.
+- Speed.
+
+## Lazy Loading Images
+
+This one's pretty new so it's not fully supported by every browser yet. As of this writing, Safari is still lagging behind. Even though not every browser supports it, it can still be a good progressive enhancement.
+data-src, the disadvantage of such approach is that…
+
+```html
+<img src="..." width="100" height="100" alt="..." loading="lazy" />
+```
+
+## Removing Accents/Diacritics in a String
+
+```javascript
+const removeAccents = (str) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};
+
+const output = removeAccents("Hétérogénéité");
+```
+
+## Manipulating query strings
+
+I've lost count of the number of times I've seen API calls like this:
+
+```javascript
+fetch(
+  `https://example.com?param1=${encodeURIComponent(
+    someValue
+  )}&param2=${encodeURIComponent(someOtherValue)}&param3=${encodeURIComponent(
+    yetAnotherValue
+  )}`
+);
+```
+
+(I'm guilty of that one too)
+
+While this technically works, there are many things wrong with this approach.
+
+- It is hard to read, even more so with prettier doing its best to keep the line length under control.
+- It's fragile, we're one bad keystroke away from messing up our URL.
+- encodeURIComponent doesn't properly encode some characters (+ vs %20 for spaces)
+
+There is something called [URLSearchParams](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it happens to be really well supported.
+
+```javascript
+const params = new URLSearchParams({
+  param1: someValue,
+  param2: someOtherValue,
+  param3: yetAnotherValue,
+});
+
+fetch(`https://example.com?${params}`);
+```
+
+This is even fully supported by Node.js since version 10 ✨
+
+## Parsing URLs
+
+Similar to the query string thing above, I've encountered this one plenty of times (disclaimer, I'm guilty of doing this too):
+
+```javascript
+const url = new URL(
+  "https://username:password@example.com:3000/path?query=1#hash"
+);
+
+console.log(url);
+```
+
+Output:
+
+```
+{
+  hash: "#hash",
+  host: "example.com:3000",
+  hostname: "example.com",
+  href: "https://username:password@example.com:3000/path?query=1#hash",
+  origin: "https://example.com:3000",
+  password: "password",
+  pathname: "/path",
+  port: "3000",
+  protocol: "https:",
+  search: "?query=1",
+  searchParams: URLSearchParams {},
+  username: "username"
+}
+```
+
+## HTML String Encoding
+
+- using a [textNode](http://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode)
+- using a [link to another page](/) with a piece of `inline code`
+
+We sometimes need to sanitize untrusted strings, these are usually strings of text that are provided by users. This technique helps to prevent XSS attacks by encoding strings before rendering them into our document.
+
+If you look on the internet for how to html-encode a piece of text, you will mostly find answers that involves regexes. Personally, the more I can stay away from regexes, the better. I'm not saying rexeges should be avoided at all cost but it's just that they get thrown around a lot and often they are not the right tool for the job.
+
+If there's one thing browsers are good at, it's handling HTML.
+
+```javascript
+const htmlEncode = (str) => {
+  const textarea = document.createElement("textarea");
+  const textNode = document.createTextNode(str);
+
+  textarea.appendChild(textNode);
+
+  return textarea.innerHTML;
+};
+
+const htmlEncodedString = htmlEncode(
+  `Hello world <img src="" onerror="alert('xss')" />`
+);
+```
+
+export default ArticleLayout;

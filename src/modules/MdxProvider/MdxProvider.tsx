@@ -24,6 +24,8 @@ const components = {
   inlineCode: InlineCode,
   img: Image,
   a: Link,
+  // Global react components
+  Image,
 };
 
 export const MdxProvider: FC = ({ children }) => {

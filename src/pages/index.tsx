@@ -31,7 +31,7 @@ export const getStaticProps: GetStaticProps<ArticlesHomeProps> = async () => {
   });
 
   const slugs = pages.map((page) => {
-    return `/${page.replace(/\.mdx$/, "")}`;
+    return `/${page.replace(/(index)?\.mdx$/, "")}`;
   });
 
   return {

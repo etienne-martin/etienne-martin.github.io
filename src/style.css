@@ -27,6 +27,7 @@
 
 html {
     touch-action: manipulation;
+    font-size: var(--font-size-m);
 }
 
 html,
@@ -41,6 +42,5 @@ body {
     -webkit-text-size-adjust: none;
     background: var(--background);
     color: var(--foreground);
-    font-size: var(--font-size-m);
     transition: color 0.25s, background-color 0.25s;
 }

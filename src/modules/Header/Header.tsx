@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { styles } from "./Header.style";
 import { SunIcon } from "../../icons/Sun";
 import { MoonIcon } from "../../icons/Moon";
+import { Image } from "../../components/Image";
 
 export const Header: FC = () => {
   const [hasMounted, setHasMounted] = useState(false);
@@ -16,14 +17,31 @@ export const Header: FC = () => {
 
   return (
     <header className={styles.header}>
-      <Link href="/">
-        <a className={styles.homeLink}>Etienne Martin</a>
-      </Link>
+      <div>
+        <Link href="/">
+          <a aria-label="Go back home" className={styles.homeLink}>
+            <Image
+              className={styles.photo}
+              alt="A tiny photo of me"
+              src="/etienne-martin.jpg"
+            />
+            <p>
+              <strong>Etienne Martin</strong>
+              <em>
+                Thinking out loud about <del>web</del> development.
+              </em>
+            </p>
+          </a>
+        </Link>
+      </div>
       <div>
         {hasMounted && (
-          <button className={styles.themeToggle} onClick={toggleTheme}>
+          <button
+            aria-label={`Switch to ${oppositeTheme} theme`}
+            className={styles.themeToggle}
+            onClick={toggleTheme}
+          >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-            Switch to {oppositeTheme} theme
           </button>
         )}
       </div>
