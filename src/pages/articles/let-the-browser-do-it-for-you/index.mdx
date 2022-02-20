@@ -1,9 +1,12 @@
-import { ArticleLayout } from "../../../modules/ArticleLayout";
-import mainImage from "./browser.png";
+export const metadata = {
+  "title": "Let the browser do it for you",
+  "date": "2022-02-20T19:26:54.937Z",
+  "image": require("./browser.png").default.src
+}
 
-# Let the browser do it for you
+<ArticleHead metadata={metadata} />
 
-<Image alt="A browser browser lifting weights" src={mainImage.src} />
+<Image alt="A browser browser lifting weights" src={metadata.image} />
 
 Browsers are an _incredible_ piece of engineering. Heavy listing, re-invent the wheel.
 
@@ -134,5 +137,3 @@ const htmlEncodedString = htmlEncode(
   `Hello world <img src="" onerror="alert('xss')" />`
 );
 ```
-
-export default ArticleLayout;

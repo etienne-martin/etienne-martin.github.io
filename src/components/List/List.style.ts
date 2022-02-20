@@ -11,5 +11,9 @@ export const styles = {
      */
     grid-template-columns: minmax(0, 1fr);
     justify-items: start;
+
+    li > & {
+      margin-top: 10px;
+    }
   `,
 };
