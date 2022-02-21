@@ -5,11 +5,10 @@ export const styles = {
     color: var(--primary-color);
     text-decoration: none;
     font-weight: 500;
-    box-shadow: 0 1px 0 0 currentColor;
 
     &:hover,
     &:focus {
-      box-shadow: none;
+      box-shadow: 0 1px 0 0 currentColor;
     }
   `,
 };

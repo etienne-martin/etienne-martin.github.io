@@ -48,7 +48,7 @@ export const styles = {
     background: none;
     cursor: pointer;
     opacity: 0.75;
-    transition: color 0.25s;
+    transition: color 0.25s, opacity 0.25s;
 
     &:hover,
     &:focus {

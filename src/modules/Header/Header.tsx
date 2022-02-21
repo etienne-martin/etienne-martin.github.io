@@ -27,9 +27,7 @@ export const Header: FC = () => {
             />
             <p>
               <strong>Etienne Martin</strong>
-              <em>
-                Thinking out loud about <del>web</del> development.
-              </em>
+              <em>Thinking out loud about web development.</em>
             </p>
           </a>
         </Link>

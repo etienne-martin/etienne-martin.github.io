@@ -63,7 +63,7 @@ While this technically works, there are many things wrong with this approach.
 
 - It is hard to read, even more so with prettier doing its best to keep the line length under control.
 - It's fragile, we're one bad keystroke away from messing up our URL.
-- encodeURIComponent doesn't properly encode some characters (+ vs %20 for spaces)
+- `encodeURIComponent` doesn't properly encode some characters (+ vs %20 for spaces)
 
 There is something called [URLSearchParams](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it happens to be really well supported.
 
