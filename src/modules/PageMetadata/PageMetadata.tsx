@@ -42,7 +42,8 @@ export const PageMetadata: FC<PageMetadataProps> = (props) => {
 
   return (
     <Head>
-      <title>{title}</title>
+      <title>{props.title ? `${props.title} – ${SITE_NAME}` : title}</title>
+
       <meta name="description" content={description} />
 
       <link rel="canonical" href={canonicalUrl} />
