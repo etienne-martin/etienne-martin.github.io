@@ -1,30 +1,22 @@
 import { GetStaticProps, NextPage } from "next";
 import Link from "next/link";
 import React from "react";
-import { listArticles } from "../helpers/articles.helper";
-
-interface Article {
-  path: string;
-  metadata: {
-    title: string;
-    date: string;
-    image: string;
-  };
-}
+import { listPosts } from "../services/Post/Post.service";
+import { Post } from "../services/Post/Post.types";
 
 interface HomepageProps {
-  articles: Article[];
+  posts: Post[];
 }
 
-const Homepage: NextPage<HomepageProps> = ({ articles }) => {
+const Homepage: NextPage<HomepageProps> = ({ posts }) => {
   return (
     <div>
-      <h1>Articles</h1>
+      <h1>Posts</h1>
 
       <ul>
-        {articles.map(({ path, metadata }) => (
+        {posts.map(({ path, metadata }) => (
           <li key={path}>
-            <Link href={`/articles/${path}`}>
+            <Link href={`/posts/${path}`}>
               <a>{metadata.title}</a>
             </Link>
           </li>
@@ -37,7 +29,7 @@ const Homepage: NextPage<HomepageProps> = ({ articles }) => {
 export const getStaticProps: GetStaticProps<HomepageProps> = async () => {
   return {
     props: {
-      articles: await listArticles(),
+      posts: await listPosts(),
     },
   };
 };

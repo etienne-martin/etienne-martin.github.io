@@ -8,7 +8,6 @@ import { Code } from "../../components/Code/Code";
 import { InlineCode } from "../../components/InlineCode/InlineCode";
 import { Image } from "../../components/Image";
 import { Link } from "../../components/Link/Link";
-import { ArticleHead } from "../ArticleHead";
 
 const components = {
   h1: Heading.h1,
@@ -27,7 +26,6 @@ const components = {
   a: Link,
   // Global react components
   Image,
-  ArticleHead,
 };
 
 export const MarkdownProvider: FC = ({ children }) => {

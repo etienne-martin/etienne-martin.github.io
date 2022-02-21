@@ -1,18 +1,17 @@
 import { GetStaticPaths, GetStaticProps } from "next";
-import { ArticlePage } from "../../modules/ArticlePage";
-import { listArticlePaths } from "../../helpers/articles.helper";
+import { listPostPaths } from "../../services/Post/Post.service";
 import { ParsedUrlQuery } from "querystring";
-import { ArticlePageProps } from "../../modules/ArticlePage/ArticlePage";
+import { Post, PostPageProps } from "../../modules/Post/Post";
 
 interface PageParams extends ParsedUrlQuery {
   path: string[];
 }
 
 export const getStaticPaths: GetStaticPaths<PageParams> = async () => {
-  const articlePaths = await listArticlePaths();
+  const postPaths = await listPostPaths();
 
   return {
-    paths: articlePaths.map((path) => ({
+    paths: postPaths.map((path) => ({
       params: {
         path: path.split("/"),
       },
@@ -22,12 +21,12 @@ export const getStaticPaths: GetStaticPaths<PageParams> = async () => {
 };
 
 export const getStaticProps: GetStaticProps<
-  ArticlePageProps,
+  PostPageProps,
   PageParams
 > = async ({ params }) => {
   const path = params?.path.join("/");
 
-  if (!path) throw new Error("Missing article path");
+  if (!path) throw new Error("Missing post path");
 
   return {
     props: {
@@ -36,4 +35,4 @@ export const getStaticProps: GetStaticProps<
   };
 };
 
-export default ArticlePage;
+export default Post;

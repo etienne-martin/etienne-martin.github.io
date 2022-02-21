@@ -1,1 +1,0 @@
-export { ArticleHead } from "./ArticleHead";
