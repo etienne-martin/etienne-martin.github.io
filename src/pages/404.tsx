@@ -1,6 +1,17 @@
-// TODO: do something with this one
+import { Link } from "../components/Link/Link";
+import { Heading } from "../components/Heading/Heading";
+
 const NotFoundPage = () => {
-  return <div>404</div>;
+  return (
+    <>
+      <Heading.h1>404</Heading.h1>
+      <br />
+      This page could not be found.
+      <br />
+      <br />
+      <Link href="/">Go back home</Link>
+    </>
+  );
 };
 
 export default NotFoundPage;
