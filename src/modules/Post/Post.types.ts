@@ -1,8 +1,10 @@
 export interface Post {
   path: string;
   metadata: {
-    title: string;
     date: string;
-    image?: string;
+    title: string;
+    description: string;
+    image: string;
+    imageAlt: string;
   };
 }

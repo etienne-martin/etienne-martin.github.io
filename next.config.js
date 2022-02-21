@@ -20,6 +20,9 @@ const config = {
   eslint: {
     dirs: ["src"],
   },
+  env: {
+    ORIGIN: process.env.ORIGIN,
+  },
   webpack: (config, { dev: isDev }) => {
     if (!isDev) {
       config.plugins.push(

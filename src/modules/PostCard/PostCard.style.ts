@@ -28,8 +28,14 @@ export const styles = {
     position: relative;
     flex-shrink: 0;
 
+    @media only screen and (max-width: 400px) {
+      width: 100px;
+      height: 70px;
+      margin-right: 20px;
+    }
+
     img {
-      object-fit: fill;
+      object-fit: cover;
       width: 100%;
       height: 100%;
       display: block;

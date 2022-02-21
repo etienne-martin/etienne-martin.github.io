@@ -1,15 +1,21 @@
-import { GetStaticProps, NextPage } from "next";
 import React from "react";
+import { GetStaticProps, NextPage } from "next";
 import { listPosts } from "../modules/Post/Post.service";
 import { Post } from "../modules/Post/Post.types";
 import { PostList } from "../modules/PostList/PostList";
+import { PageMetadata } from "../modules/PageMetadata/PageMetadata";
 
 interface HomepageProps {
   posts: Post[];
 }
 
 const Homepage: NextPage<HomepageProps> = ({ posts }) => {
-  return <PostList posts={posts} />;
+  return (
+    <>
+      <PageMetadata />
+      <PostList posts={posts} />
+    </>
+  );
 };
 
 export const getStaticProps: GetStaticProps<HomepageProps> = async () => {

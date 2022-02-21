@@ -1,9 +1,11 @@
 import browserImage from "./browser.png";
 
 export const metadata = {
-  "title": "Let the browser do it for you",
   "date": "2022-02-18T19:26:54.937Z",
-  "image": browserImage.src
+  "title": "Let the browser do it for you",
+  "description": "A dummy description",
+  "image": browserImage.src,
+  "imageAlt": "A little browser lifting weights"
 }
 
 Browsers are an _incredible_ piece of engineering. Heavy listing, re-invent the wheel.
@@ -114,6 +116,7 @@ Output:
 
 - using a [textNode](http://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode)
 - using a [link to another page](/) with a piece of `inline code`
+- using a [link to an external webite](https://example.com)
 
 We sometimes need to sanitize untrusted strings, these are usually strings of text that are provided by users. This technique helps to prevent XSS attacks by encoding strings before rendering them into our document.
 

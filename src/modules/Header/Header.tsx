@@ -5,6 +5,7 @@ import { styles } from "./Header.style";
 import { SunIcon } from "../../icons/Sun";
 import { MoonIcon } from "../../icons/Moon";
 import { Image } from "../../components/Image";
+import { SITE_DESCRIPTION, SITE_NAME } from "../../config";
 
 export const Header: FC = () => {
   const [hasMounted, setHasMounted] = useState(false);
@@ -26,8 +27,8 @@ export const Header: FC = () => {
               src="/etienne-martin.jpg"
             />
             <p>
-              <strong>Etienne Martin</strong>
-              <em>Thinking out loud about web development.</em>
+              <strong>{SITE_NAME}</strong>
+              <em>{SITE_DESCRIPTION}</em>
             </p>
           </a>
         </Link>

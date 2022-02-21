@@ -11,6 +11,16 @@
     --font-size-xl: 36px;
 }
 
+@media only screen and (max-width: 400px) {
+    :root {
+        --font-size-xs: 12px;
+        --font-size-s: 14px;
+        --font-size-m: 16px;
+        --font-size-l: 18px;
+        --font-size-xl: 24px;
+    }
+}
+
 [data-theme='dark'] {
     --background: #2a2734;
     --foreground: white;

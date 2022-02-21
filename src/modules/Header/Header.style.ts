@@ -6,6 +6,10 @@ export const styles = {
     justify-content: space-between;
     padding: 60px 20px;
     align-items: center;
+
+    @media only screen and (max-width: 400px) {
+      padding: 40px 20px;
+    }
   `,
   homeLink: css`
     text-decoration: none;
@@ -49,6 +53,7 @@ export const styles = {
     cursor: pointer;
     opacity: 0.75;
     transition: color 0.25s, opacity 0.25s;
+    margin-left: 20px;
 
     &:hover,
     &:focus {

@@ -37,6 +37,8 @@ jobs:
 
       - name: Build
         run: yarn build
+        env:
+          ORIGIN: "https://etiennemartin.ca"
 
       - name: Deploy
         if: github.ref == 'refs/heads/main'
