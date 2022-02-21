@@ -42,7 +42,12 @@ const config = {
       use: {
         loader: "responsive-loader",
         options: {
-          outputPath: "../../../public/images",
+          /**
+           * Fixes a weird bug where the outputPath would change depending on if we're doing a production build or not
+           */
+          outputPath: isDev
+            ? "../../../public/images"
+            : "../../../../public/images",
           publicPath: "/images",
           format: "jpg",
           sizes: [
