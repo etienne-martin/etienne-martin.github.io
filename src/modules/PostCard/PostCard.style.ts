@@ -47,6 +47,9 @@ export const styles = {
   title,
   description: css`
     font-size: var(--font-size-s);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   `,
   small: css`
     font-size: var(--font-size-xs);

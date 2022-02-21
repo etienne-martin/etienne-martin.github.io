@@ -1,4 +1,4 @@
-import React, { FC, Fragment } from "react";
+import React, { FC } from "react";
 import { styles } from "./PostList.style";
 import { Post } from "../Post/Post.types";
 import { PostCard } from "../PostCard/PostCard";

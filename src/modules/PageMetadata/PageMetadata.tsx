@@ -62,7 +62,11 @@ export const PageMetadata: FC<PageMetadataProps> = (props) => {
       <meta property="og:image:alt" content={imageAlt} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      <meta property="article:author" content={SITE_NAME} />
+
+      {type === "article" && (
+        <meta property="article:author" content={SITE_NAME} />
+      )}
+
       {props.publishedTime && (
         <meta
           property="article:published_time"
