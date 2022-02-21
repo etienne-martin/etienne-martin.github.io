@@ -20,9 +20,9 @@ export const PostCard: FC<PostCardProps> = ({ post }) => {
             <Image alt="" src={post.metadata.image} />
           </div>
           <div>
-            <Heading.h2 className={styles.title}>
+            <Heading.h3 className={styles.title}>
               {post.metadata.title}
-            </Heading.h2>
+            </Heading.h3>
             <Paragraph className={styles.date}>
               {formatDate(new Date(post.metadata.date))}
             </Paragraph>

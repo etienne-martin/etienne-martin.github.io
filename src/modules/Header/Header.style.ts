@@ -24,6 +24,7 @@ export const styles = {
       transition: color 0.25s;
       font-weight: 800;
       display: block;
+      margin-bottom: 5px;
     }
 
     em {
