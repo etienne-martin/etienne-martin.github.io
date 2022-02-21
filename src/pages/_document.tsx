@@ -15,12 +15,10 @@ export default class MyDocument extends Document {
           />
           <link rel="stylesheet" href="/fonts/Inter/Inter.css" />
 
-          {/* TODO: create favicons */}
-          {/* 180×180 */}
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-          {/* 32×32 */}
+          {/* Taken from: https://css-tricks.com/how-to-favicon-in-2021/ */}
           <link rel="icon" href="/favicon.ico" sizes="any" />
-          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+          <link rel="icon" href="/icon-192.png" type="image/png" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           <link rel="manifest" href="/manifest.webmanifest" />
         </Head>
         <body>

@@ -49,10 +49,6 @@ export const PageMetadata: FC<PageMetadataProps> = (props) => {
       <link rel="canonical" href={canonicalUrl} />
       <meta httpEquiv="Content-Language" content="en" />
 
-      {/* TODO: create favicons */}
-      <link rel="icon" href="/favicon.svg?v=1" />
-      <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=1" />
-
       <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
       <meta name="application-name" content={SITE_NAME} />
 
