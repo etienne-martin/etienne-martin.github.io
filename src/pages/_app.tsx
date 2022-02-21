@@ -5,7 +5,7 @@ import "../style.css";
 import { Layout } from "../modules/Layout/Layout";
 import { Providers } from "../modules/Providers";
 
-class MyApp extends App {
+export default class MyApp extends App {
   render() {
     const { Component, pageProps } = this.props;
 
@@ -18,5 +18,3 @@ class MyApp extends App {
     );
   }
 }
-
-export default MyApp;

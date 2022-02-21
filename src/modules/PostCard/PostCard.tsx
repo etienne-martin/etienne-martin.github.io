@@ -5,7 +5,7 @@ import { Post } from "../Post/Post.types";
 import { Heading } from "../../components/Heading/Heading";
 import { formatDate } from "../../utils/date";
 import { Image } from "../../components/Image";
-import { Paragraph } from "../../components/paragraph/Paragraph";
+import { Paragraph } from "../../components/Paragraph/Paragraph";
 
 interface PostCardProps {
   post: Post;

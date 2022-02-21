@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import { MDXProvider } from "@mdx-js/react";
 import { Heading } from "../../components/Heading/Heading";
-import { Paragraph } from "../../components/paragraph/Paragraph";
+import { Paragraph } from "../../components/Paragraph/Paragraph";
 import { List } from "../../components/List/List";
 import { ListItem } from "../../components/ListItem/ListItem";
 import { Code } from "../../components/Code/Code";

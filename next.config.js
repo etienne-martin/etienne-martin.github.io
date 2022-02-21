@@ -43,7 +43,8 @@ const config = {
         loader: "responsive-loader",
         options: {
           /**
-           * Fixes a weird bug where the outputPath would change depending on if we're doing a production build or not
+           * Ugly hack that fixes a weird bug where the outputPath would change
+           * depending on if we're doing a production build or not
            */
           outputPath: isDev
             ? "../../../public/images"

@@ -15,6 +15,7 @@ export default class MyDocument extends Document {
           />
           <link rel="stylesheet" href="/fonts/Inter/Inter.css" />
 
+          {/* TODO: create favicons */}
           {/* 180×180 */}
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           {/* 32×32 */}
