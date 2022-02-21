@@ -2,7 +2,6 @@ import { css } from "linaria";
 
 const title = css`
   transition: color 0.25s;
-  margin-bottom: 5px;
 `;
 
 export const styles = {
@@ -41,9 +40,16 @@ export const styles = {
       display: block;
     }
   `,
+  body: css`
+    display: grid;
+    grid-row-gap: 5px;
+  `,
   title,
-  date: css`
+  description: css`
     font-size: var(--font-size-s);
+  `,
+  date: css`
+    font-size: var(--font-size-xs);
     opacity: 0.5;
   `,
 };

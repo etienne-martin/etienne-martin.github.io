@@ -19,10 +19,13 @@ export const PostCard: FC<PostCardProps> = ({ post }) => {
           <div className={styles.thumbnail}>
             <Image alt={post.metadata.imageAlt} src={post.metadata.image} />
           </div>
-          <div>
+          <div className={styles.body}>
             <Heading.h3 className={styles.title}>
               {post.metadata.title}
             </Heading.h3>
+            <Paragraph className={styles.description}>
+              {post.metadata.description}
+            </Paragraph>
             <Paragraph className={styles.date}>
               {formatDate(new Date(post.metadata.date))}
             </Paragraph>
