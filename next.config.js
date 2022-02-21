@@ -23,6 +23,9 @@ const config = {
   env: {
     ORIGIN: process.env.ORIGIN,
   },
+  images: {
+    disableStaticImages: true,
+  },
   webpack: (config, { dev: isDev }) => {
     if (!isDev) {
       config.plugins.push(
@@ -33,6 +36,23 @@ const config = {
         })
       );
     }
+
+    config.module.rules.push({
+      test: /\.(jpe?g|png|webp)$/i,
+      use: {
+        loader: "responsive-loader",
+        options: {
+          outputPath: "../../../public/images",
+          publicPath: "/images",
+          format: "jpg",
+          sizes: [
+            100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300,
+            1400, 1500, 1600,
+          ].reverse(),
+          adapter: require("responsive-loader/sharp"),
+        },
+      },
+    });
 
     return config;
   },

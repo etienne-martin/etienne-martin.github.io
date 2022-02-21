@@ -20,7 +20,10 @@ const getPost = (
     metadata,
   } = require(`../../pages/posts/${path}/index.mdx`);
 
-  return { Markdown, metadata };
+  return {
+    Markdown,
+    metadata,
+  };
 };
 
 export const Post: FC<PostPageProps> = ({ path, readingTime }) => {
@@ -31,7 +34,7 @@ export const Post: FC<PostPageProps> = ({ path, readingTime }) => {
       <PageMetadata
         title={metadata.title}
         description={metadata.description}
-        image={metadata.image}
+        image={metadata.image.src}
         imageAlt={metadata.imageAlt}
         publishedTime={new Date(metadata.date)}
         type="article"
@@ -43,7 +46,14 @@ export const Post: FC<PostPageProps> = ({ path, readingTime }) => {
             {formatDate(new Date(metadata.date))} • {readingTime}
           </p>
         </div>
-        <Image alt={metadata.imageAlt} src={metadata.image} />
+        <Image
+          alt={metadata.imageAlt}
+          src={metadata.image.src}
+          srcSet={metadata.image.srcSet}
+          width={metadata.image.width}
+          height={metadata.image.height}
+          sizes="(max-width: 768px) 100vw, 768px"
+        />
         <Markdown />
       </MarkdownContent>
     </>

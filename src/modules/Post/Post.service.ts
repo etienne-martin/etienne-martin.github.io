@@ -30,6 +30,11 @@ export const listPosts = async () => {
     paths.map(async (path) => {
       const { metadata } = await import(`../../pages/posts/${path}/index.mdx`);
 
+      // Remove unserializable property
+      delete metadata.image.toString;
+      // Remove unused property
+      delete metadata.image.images;
+
       return {
         path,
         metadata,

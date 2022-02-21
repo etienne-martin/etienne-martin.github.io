@@ -7,9 +7,11 @@ import { MoonIcon } from "../../icons/Moon";
 import { Image } from "../../components/Image";
 import { SITE_DESCRIPTION, SITE_NAME } from "../../config";
 
+const profilePicture = require("./etienne-martin.jpg");
+
 export const Header: FC = () => {
   const [hasMounted, setHasMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme: theme, setTheme } = useTheme();
   const oppositeTheme = theme === "dark" ? "light" : "dark";
 
   useEffect(() => setHasMounted(true), []);
@@ -22,9 +24,13 @@ export const Header: FC = () => {
         <Link href="/">
           <a aria-label="Go back home" className={styles.homeLink}>
             <Image
-              className={styles.photo}
               alt="A tiny photo of me"
-              src="/etienne-martin.jpg"
+              className={styles.photo}
+              src={profilePicture.src}
+              srcSet={profilePicture.srcSet}
+              width={profilePicture.width}
+              height={profilePicture.height}
+              sizes="60px"
             />
             <p>
               <strong>{SITE_NAME}</strong>

@@ -17,7 +17,14 @@ export const PostCard: FC<PostCardProps> = ({ post }) => {
       <Link href={`/posts/${post.path}`}>
         <a>
           <div className={styles.thumbnail}>
-            <Image alt={post.metadata.imageAlt} src={post.metadata.image} />
+            <Image
+              alt={post.metadata.imageAlt}
+              src={post.metadata.image.src}
+              srcSet={post.metadata.image.srcSet}
+              width={post.metadata.image.width}
+              height={post.metadata.image.height}
+              sizes="150px"
+            />
           </div>
           <div className={styles.body}>
             <Heading.h3 className={styles.title}>
