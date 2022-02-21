@@ -1,8 +1,9 @@
 import { GetStaticProps, NextPage } from "next";
-import Link from "next/link";
 import React from "react";
 import { listPosts } from "../modules/Post/Post.service";
 import { Post } from "../modules/Post/Post.types";
+import { PostCard } from "../modules/PostCard/PostCard";
+import { PostList } from "../modules/PostList/PostList";
 
 interface HomepageProps {
   posts: Post[];
@@ -10,19 +11,11 @@ interface HomepageProps {
 
 const Homepage: NextPage<HomepageProps> = ({ posts }) => {
   return (
-    <div>
-      <h1>Posts</h1>
-
-      <ul>
-        {posts.map(({ path, metadata }) => (
-          <li key={path}>
-            <Link href={`/posts/${path}`}>
-              <a>{metadata.title}</a>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <PostList>
+      {posts.map((post) => (
+        <PostCard key={post.path} post={post} />
+      ))}
+    </PostList>
   );
 };
 
