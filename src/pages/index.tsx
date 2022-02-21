@@ -1,10 +1,10 @@
 import { GetStaticProps, NextPage } from "next";
 import Link from "next/link";
 import React from "react";
-import { glob } from "../utils/glob";
+import { listArticles } from "../helpers/articles.helper";
 
 interface Article {
-  slug: string;
+  path: string;
   metadata: {
     title: string;
     date: string;
@@ -22,9 +22,9 @@ const Homepage: NextPage<HomepageProps> = ({ articles }) => {
       <h1>Articles</h1>
 
       <ul>
-        {articles.map(({ slug, metadata }) => (
-          <li key={slug}>
-            <Link href={slug}>
+        {articles.map(({ path, metadata }) => (
+          <li key={path}>
+            <Link href={`/articles/${path}`}>
               <a>{metadata.title}</a>
             </Link>
           </li>
@@ -35,25 +35,9 @@ const Homepage: NextPage<HomepageProps> = ({ articles }) => {
 };
 
 export const getStaticProps: GetStaticProps<HomepageProps> = async () => {
-  const pages = await glob("**/*.mdx", {
-    cwd: `${process.cwd()}/src/pages`,
-  });
-
-  const articles = await Promise.all(
-    pages.map(async (page) => {
-      const slug = `/${page.replace(/(index)?\.mdx$/, "")}`;
-      const { metadata } = await import(`./${page}`);
-
-      return {
-        slug,
-        metadata,
-      };
-    })
-  );
-
   return {
     props: {
-      articles,
+      articles: await listArticles(),
     },
   };
 };

@@ -31,5 +31,5 @@ const components = {
 };
 
 export const MarkdownProvider: FC = ({ children }) => {
-  return <MDXProvider components={components as any}>{children}</MDXProvider>;
+  return <MDXProvider components={components}>{children}</MDXProvider>;
 };

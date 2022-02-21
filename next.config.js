@@ -7,11 +7,12 @@ const withMDX = require("@next/mdx")({
     remarkPlugins: [],
     rehypePlugins: [],
     providerImportSource: "@mdx-js/react",
+    useDynamicImport: false,
   },
 });
 
 const config = {
-  pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
+  pageExtensions: ["ts", "tsx", "js", "jsx"],
   distDir: "./dist/.next",
   devIndicators: {
     autoPrerender: false,
