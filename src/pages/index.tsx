@@ -1,8 +1,8 @@
 import { GetStaticProps, NextPage } from "next";
 import Link from "next/link";
 import React from "react";
-import { listPosts } from "../services/Post/Post.service";
-import { Post } from "../services/Post/Post.types";
+import { listPosts } from "../modules/Post/Post.service";
+import { Post } from "../modules/Post/Post.types";
 
 interface HomepageProps {
   posts: Post[];

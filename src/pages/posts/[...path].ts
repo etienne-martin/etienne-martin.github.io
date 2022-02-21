@@ -1,5 +1,5 @@
 import { GetStaticPaths, GetStaticProps } from "next";
-import { listPostPaths } from "../../services/Post/Post.service";
+import { listPostPaths } from "../../modules/Post/Post.service";
 import { ParsedUrlQuery } from "querystring";
 import { Post, PostPageProps } from "../../modules/Post/Post";
 
