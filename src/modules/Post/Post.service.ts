@@ -1,4 +1,6 @@
 import { glob } from "../../utils/glob";
+import readingTime from "reading-time";
+import { promises as fs } from "fs";
 
 export const listPostPaths = async () => {
   const paths = await glob("**/*.mdx", {
@@ -8,6 +10,17 @@ export const listPostPaths = async () => {
   return paths.map((filepath) => {
     return filepath.replace(/\/(index)?\.mdx$/, "");
   });
+};
+
+export const getPostContent = async (path: string) => {
+  return await fs.readFile(
+    `${process.cwd()}/src/pages/posts/${path}/index.mdx`,
+    "utf-8"
+  );
+};
+
+export const getReadingTime = async (path: string) => {
+  return readingTime(await getPostContent(path)).text;
 };
 
 export const listPosts = async () => {
@@ -20,6 +33,7 @@ export const listPosts = async () => {
       return {
         path,
         metadata,
+        readingTime: await getReadingTime(path),
       };
     })
   );

@@ -9,6 +9,7 @@ import { Post as PostEntity } from "./Post.types";
 
 export interface PostPageProps {
   path: string;
+  readingTime: string;
 }
 
 const getPost = (
@@ -22,8 +23,8 @@ const getPost = (
   return { Markdown, metadata };
 };
 
-export const Post: FC<PostPageProps> = (props) => {
-  const { Markdown, metadata } = getPost(props.path);
+export const Post: FC<PostPageProps> = ({ path, readingTime }) => {
+  const { Markdown, metadata } = getPost(path);
 
   return (
     <>
@@ -38,9 +39,11 @@ export const Post: FC<PostPageProps> = (props) => {
       <MarkdownContent>
         <div>
           <Heading.h1 className={styles.title}>{metadata.title}</Heading.h1>
-          <p className={styles.date}>{formatDate(new Date(metadata.date))}</p>
+          <p className={styles.small}>
+            {formatDate(new Date(metadata.date))} • {readingTime}
+          </p>
         </div>
-        <Image alt="A browser browser lifting weights" src={metadata.image} />
+        <Image alt={metadata.imageAlt} src={metadata.image} />
         <Markdown />
       </MarkdownContent>
     </>

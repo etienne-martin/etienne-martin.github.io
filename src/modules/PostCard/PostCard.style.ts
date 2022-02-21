@@ -48,7 +48,7 @@ export const styles = {
   description: css`
     font-size: var(--font-size-s);
   `,
-  date: css`
+  small: css`
     font-size: var(--font-size-xs);
     opacity: 0.5;
   `,

@@ -1,5 +1,5 @@
 import { GetStaticPaths, GetStaticProps } from "next";
-import { listPostPaths } from "../../modules/Post/Post.service";
+import { getReadingTime, listPostPaths } from "../../modules/Post/Post.service";
 import { ParsedUrlQuery } from "querystring";
 import { Post, PostPageProps } from "../../modules/Post/Post";
 
@@ -31,6 +31,7 @@ export const getStaticProps: GetStaticProps<
   return {
     props: {
       path,
+      readingTime: await getReadingTime(path),
     },
   };
 };

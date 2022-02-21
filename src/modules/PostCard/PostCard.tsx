@@ -26,8 +26,8 @@ export const PostCard: FC<PostCardProps> = ({ post }) => {
             <Paragraph className={styles.description}>
               {post.metadata.description}
             </Paragraph>
-            <Paragraph className={styles.date}>
-              {formatDate(new Date(post.metadata.date))}
+            <Paragraph className={styles.small}>
+              {formatDate(new Date(post.metadata.date))} • {post.readingTime}
             </Paragraph>
           </div>
         </a>
