@@ -17,5 +17,8 @@ export const styles = {
     &:is(h5) {
       font-size: var(--font-size-xs);
     }
+    &:is(h6) {
+      font-size: var(--font-size-xs);
+    }
   `,
 };
