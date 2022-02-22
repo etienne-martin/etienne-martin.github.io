@@ -6,17 +6,123 @@ export const metadata = {
   "imageAlt": "A little browser lifting weights"
 }
 
-## Dependency audit
+A dependency audit is performed as part of every build in Jenkins. This allows us to spot new vulnerabilities as they
+occur. Builds will fail when vulnerabilities are discovered to avoid merging code that contains known vulnerabilities.
 
-- scroll snapping
-- encryption
-- smooth scrolling
+How to fix the dreaded "Vulnerability Found" error message.
 
-Mention that it's not always possible to rely on the techniques highlighted here if you have an isomorphic application.
+## How to run an audit
 
-The advantage of these approaches:
+Run this command to perform a vulnerability audit against the installed packages:
 
-No need to add yet another library which would increase the size of your JavaScript bundle.
+```bash
+yarn audit-packages
+```
 
-- Robustness.
-- Speed.
+## How to patch a vulnerability
+
+### 1. Identify the vulnerable package(s)
+
+You can do this by running the following command `yarn audit-packages`. This will output something:
+
+```
+Vulnerability Found:
+
+  Severity: MODERATE
+  Modules: axios>follow-redirects
+  URL: https://github.com/advisories/GHSA-pw2r-vq6v-hr8c
+```
+
+In this example, we can see that the `follow-redirects` module is the culprit. However, it's not a direct dependency, it
+is used indirectly by `axios`.
+
+### 2. Identify affected package version(s)
+
+Open the advisory link in your browser. This will show you which versions of the package are affected and if a patch has
+been released.
+
+### 3. Upgrade the dependency
+
+#### Direct dependencies
+
+If the affected package is a direct dependency (i.e. a package that's listed in your `package.json`), upgrade the package
+to its latest _patch_ version. Be careful if you decide to bump to a _major_ version as this will likely
+introduce breaking changes that could require some refactoring.
+
+Run the following command to upgrade a direct dependency:
+
+```bash
+yarn add <package-name>@^<patched-version>
+```
+
+#### Nested dependencies
+
+Things get a little trickier if the affected package is nested in our dependency tree as we won't be able to upgrade the
+package directly. The first thing to do is to check if we can indirectly update the vulnerable package by updating
+direct dependencies that rely on it.
+
+Run the following command to upgrade a direct dependency that relies on a vulnerable package:
+
+```bash
+yarn add <package-name>@^<patched-version>
+```
+
+This is not always feasible for newer vulnerabilities. We may be depending on a package that is not updated frequently,
+which depends on another package that is causing our security audit to fail. In this case, if the version range
+specified by our direct dependency does not cover the new sub-dependency version, we are stuck waiting for the author.
+
+In such cases we can force yarn to resolve a different version of a nested dependency by
+adding a `resolutions` field to our `package.json` and defining our version overrides:
+
+```diff
+ {
+   "name": "web-app-ssr",
+   "version": "2.0.1",
+   "dependencies": {
+     "axios": "^0.25.0"
+   },
++  "resolutions": {
++    "follow-redirects": "^1.14.8"
++  }
+ }
+```
+
+Make sure to specify the latest _patch_ version when changing a module's resolution. Upgrading to a _major_ version
+might break some of our direct dependencies if they are not compatible with the newly specified version.
+
+It is preferable to be specific when changing yarn's module resolution. If we have multiple dependencies relying on
+multiple versions of a same package and only one of the dependency depends on a vulnerable version, it is preferable to
+override only the vulnerable version by specifying an explicit resolution instead of overriding a version project-wide.
+
+```diff
+ {
+   "name": "web-app-ssr",
+   "version": "2.0.1",
+   "dependencies": {
+     "axios": "^0.25.0"
+   },
++  "resolutions": {
++    "axios/follow-redirects": "^1.14.8"
++  }
+ }
+```
+
+#### Ignoring a vulnerability
+
+Sometimes there are no patch available, this is common for newly discovered vulnerabilities or packages that are not
+actively maintained. Depending on the severity, we may choose to remove the dependency altogether and replace it with a
+package with equivalent functionality. However, this is not always feasible or realistic, in those cases we can decide
+to ignore the vulnerability if we judge that the vulnerability is negligible based on our use of the package.
+Or maybe npm audit is just crying wolf, and we need to go about with our day.
+
+As a last resort you can exclude a vulnerability using the `--exclude` option of the audit command found in
+`./tools/audit.sh`:
+
+```diff
+ yarn run improved-yarn-audit \
+   --min-severity moderate \
+   --ignore-dev-deps \
+-  --retry-on-network-failure
++  --retry-on-network-failure \
++  --exclude GHSA-93q8-gq69-wqmw
+```

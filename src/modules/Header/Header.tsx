@@ -7,7 +7,7 @@ import { MoonIcon } from "../../icons/Moon";
 import { Image } from "../../components/Image";
 import { SITE_DESCRIPTION, SITE_NAME } from "../../config";
 
-const profilePicture = require("./etienne-martin.jpg");
+const profilePicture = require("./Untitled_Artwork.png");
 
 export const Header: FC = () => {
   const [hasMounted, setHasMounted] = useState(false);

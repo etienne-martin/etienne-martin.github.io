@@ -6,23 +6,41 @@ export const metadata = {
   "imageAlt": "A little browser lifting weights"
 }
 
-Browsers are an _incredible_ piece of engineering. Heavy listing, re-invent the wheel.
+Browsers are an incredible feat of engineering. Just to give you an idea, the Chromium codebase contains about [35 million lines of source code](https://en.wikipedia.org/wiki/Chromium_(web_browser)#:~:text=35%20million%20source%20lines%20of%20code.). It's honestly so mind boggling to me that they work at all.
+
+While browsers can do a lot of stuff, there are things we developers have to implement ourselves because they are not supported natively.
+
+In those cases we either:
+
+- handcraft the missing functionality
+- install yet another package while wishing we didn't have to add another 50kb to our JavaScript bundle.
+
+Using built-in browser features is not a novel idea. Choosing `border-radius` over sprites may sound obvious nowadays but we have to keep in mind that things move quickly. There are a lot of things we take for granted that were just hopes and dreams not long ago. Something that can't be done today might be possible next year so it's important to try to stay up to date with what's getting shipped.
+
+I've realised that once I have found a way of doing things, I tend to stick with it and accept it as the status quo. I'll be out there reusing techniques from my old bag of tricks without revisiting them to see if anything changed in the browser landscape.
+
+This post is mostly a reminder to myself that I don't always need to re-invent the wheel and that I can, in most cases, and sometimes with a bit of patience, rely on the browser to do the heavy lifting for me.
+
+You have a choice as a developer, you can choose to go the hard way, or you can **let the browser do it for you**.
+
+## Before we start
+
+I need to mention that it's not always possible to rely on some of the techniques below if you are building an isomorphic application since some of them rely on browser APIs that aren't available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749).
+
+## But why would you want to do that?
+
+The most obvious reasons for me is. Not only we don't have to spend time re-writing code that smarter people already wrote before us, we can also enjoy these benefits:
+
+- **It's fast** - Browser API are almost always going to be faster than their JavaScript counterpart.
+- **Size** - By relying on code that's shipped with the browser, we don't need to add yet another library which would increase the size of your JavaScript bundle.
+- **Robustness** - This code has been battle tested
+- **Maintainability** - The most maintainable code is no code at all.
 
 This is a **non-exhaustive** list.
 
-- Mention that it's not always possible to rely on the techniques highlighted here if you have an isomorphic application.
-- scroll snapping
-- encryption
-- smooth scrolling
+## Dates
 
-Mention that it's not always possible to rely on the techniques highlighted here if you have an isomorphic application.
-
-The advantage of these approaches:
-
-No need to add yet another library which would increase the size of your JavaScript bundle.
-
-- Robustness.
-- Speed.
+If there's one thing a developer shouldn't have to deal with, it's dates, more specifically: timezones.
 
 ## Lazy Loading Images
 
@@ -34,6 +52,8 @@ data-src, the disadvantage of such approach is that…
 ```
 
 ## Removing Accents/Diacritics in a String
+
+Gone are the days where we had to use lodash's [`deburr`](https://lodash.com/docs/4.17.15#deburr) function to remove accents from a string.
 
 ```javascript
 const removeAccents = (str) => {
@@ -65,7 +85,7 @@ While this technically works, there are many things wrong with this approach.
 - It's fragile, we're one bad keystroke away from messing up our URL.
 - `encodeURIComponent` doesn't properly encode some characters (+ vs %20 for spaces)
 
-There is something called [URLSearchParams](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it happens to be really well supported.
+There is this thing called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it happens to be really well supported.
 
 ```javascript
 const params = new URLSearchParams({
@@ -136,3 +156,64 @@ const htmlEncodedString = htmlEncode(
   `Hello world <img src="" onerror="alert('xss')" />`
 );
 ```
+
+## Convert to absolute URL
+
+```javascript
+const convertToAbsoluteUrl = (base, relativeUrl) => {
+  return new URL(relativeUrl, base).toString();
+};
+```
+
+## Query String Parsing
+
+```javascript
+const parseQueryString = (query) => {
+  return Object.fromEntries(new URLSearchParams(query).entries());
+};
+
+const queryParams = parseQueryString(`?query=1&test=2`);
+```
+
+## Email Address Validation
+
+This technique leverages the build-in browser validation.
+
+Constraint Validation API: https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation
+
+```javascript
+const validateEmail = (email) => {
+  const input = document.createElement("input");
+
+  input.type = "email";
+  input.required = true;
+  input.value = email;
+
+  return input.checkValidity();
+};
+
+const isValid = validateEmail(`test@example.com`);
+```
+
+## Extract text from HTML
+
+```javascript
+const extractTextFromHtml = (html) => {
+  const { documentElement } = new DOMParser().parseFromString(
+    html,
+    "text/html"
+  );
+
+  return documentElement.textContent;
+};
+
+const text = extractTextFromHtml(
+  `Hello world <img src="" onerror="alert('xss')" />`
+);
+```
+
+## Other techniques
+
+- scroll snapping
+- encryption
+- smooth scrolling

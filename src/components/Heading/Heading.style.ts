@@ -11,5 +11,11 @@ export const styles = {
     &:is(h3) {
       font-size: var(--font-size-m);
     }
+    &:is(h4) {
+      font-size: var(--font-size-s);
+    }
+    &:is(h5) {
+      font-size: var(--font-size-xs);
+    }
   `,
 };
