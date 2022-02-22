@@ -1,10 +1,10 @@
 export const metadata = {
-  "date": "2022-02-18T19:26:54.937Z",
-  "title": "Watch out for Memory Leaks!",
-  "description": "A dummy description",
-  "image": require("./browser.png"),
-  "imageAlt": "A little browser lifting weights"
-}
+  date: "2022-02-18T19:26:54.937Z",
+  title: "Watch out for Memory Leaks!",
+  description: "A dummy description",
+  image: require("./browser.png"),
+  imageAlt: "A little browser lifting weights",
+};
 
 ## resizeObserver.disconnect
 
@@ -54,23 +54,24 @@ export const PageDimensions: FC = () => {
 ## AbortController
 
 ```tsx
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 
 export const GithubStarCount: FC = () => {
-  const abortControllerRef = useRef(new AbortController());
   const [starCount, setStarCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     fetch("https://api.github.com/repos/etienne-martin/device-detector-js", {
-      signal: abortControllerRef.current.signal,
+      signal: abortController.signal,
     })
       .then((response) => response.json())
       .then((repo) => setStarCount(repo.stargazers_count))
       .catch((err) => setError(err.message));
 
     return () => {
-      abortControllerRef.current.abort();
+      abortController.abort();
     };
   }, []);
 
