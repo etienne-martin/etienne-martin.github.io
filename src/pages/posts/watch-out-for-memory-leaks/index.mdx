@@ -1,0 +1,138 @@
+export const metadata = {
+  "date": "2022-02-18T19:26:54.937Z",
+  "title": "Watch out for Memory Leaks!",
+  "description": "A dummy description",
+  "image": require("./browser.png"),
+  "imageAlt": "A little browser lifting weights"
+}
+
+## resizeObserver.disconnect
+
+```tsx
+import React, { FC, useEffect, useRef, useState } from "react";
+
+interface Dimensions {
+  width: number;
+  height: number;
+}
+
+export const PageDimensions: FC = () => {
+  const hasUnmountedRef = useRef(false);
+  const [{ width, height }, setDimensions] = useState<Dimensions>({
+    width: document.body.clientWidth,
+    height: document.body.clientHeight,
+  });
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(([{ contentRect }]) => {
+      if (hasUnmountedRef.current) return;
+
+      setDimensions({
+        width: contentRect.width,
+        height: contentRect.height,
+      });
+    });
+
+    resizeObserver.observe(document.body);
+
+    return () => {
+      hasUnmountedRef.current = true;
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <>
+      Width: {width}
+      <br />
+      Height: {height}
+    </>
+  );
+};
+```
+
+## AbortController
+
+```tsx
+import React, { FC, useEffect, useRef, useState } from "react";
+
+export const GithubStarCount: FC = () => {
+  const abortControllerRef = useRef(new AbortController());
+  const [starCount, setStarCount] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("https://api.github.com/repos/etienne-martin/device-detector-js", {
+      signal: abortControllerRef.current.signal,
+    })
+      .then((response) => response.json())
+      .then((repo) => setStarCount(repo.stargazers_count))
+      .catch((err) => setError(err.message));
+
+    return () => {
+      abortControllerRef.current.abort();
+    };
+  }, []);
+
+  if (error) return <>{error}</>;
+  if (starCount === null) return <>Loading...</>;
+
+  return <>{starCount}</>;
+};
+```
+
+## clearInterval
+
+```tsx
+import React, { FC, useEffect, useState } from "react";
+
+export const Epoch: FC = () => {
+  const [currentEpoch, setCurrentEpoch] = useState<number>(new Date().getTime);
+
+  useEffect(() => {
+    const intervalId = setInterval(
+      () => setCurrentEpoch(new Date().getTime),
+      1000
+    );
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  return <>{currentEpoch}</>;
+};
+```
+
+## clearWatch
+
+```tsx
+import React, { FC, useEffect, useState } from "react";
+
+export const GeolocationPositionIndicator: FC = () => {
+  const [position, setPosition] = useState<GeolocationPosition | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => setPosition(position),
+      (err) => setError(err.message)
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
+
+  if (error) return <>{error}</>;
+  if (!position) return <>Loading...</>;
+
+  return (
+    <>
+      Longitude: {position?.coords.longitude}
+      <br />
+      Latitude: {position?.coords.latitude}
+    </>
+  );
+};
+```

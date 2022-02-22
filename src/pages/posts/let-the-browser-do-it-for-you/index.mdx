@@ -136,9 +136,14 @@ Output:
 - using a [link to another page](/) with a piece of `inline code`
 - using a [link to an external webite](https://example.com)
 
-We sometimes need to sanitize untrusted strings, these are usually strings of text that are provided by users. This technique helps to prevent XSS attacks by encoding strings before rendering them into our document.
+We sometimes need to sanitize untrusted strings, these are usually strings of text that are provided by users. This technique helps prevent XSS attacks by encoding strings before rendering them into our document.
 
-If you look on the internet for how to html-encode a piece of text, you will mostly find answers that involves regexes. Personally, the more I can stay away from regexes, the better. I'm not saying rexeges should be avoided at all cost but it's just that they get thrown around a lot and often they are not the right tool for the job.
+If you look on the internet for how to html-encode a piece of text, you will mostly find answers that involves regexes:
+
+- [How to encode a string in JavaScript for displaying in HTML?](https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html)
+- [How to escape HTML](https://stackoverflow.com/questions/3043775/how-to-escape-html)
+
+Personally, the more I can stay away from regexes, the better. I'm not saying rexeges should be avoided at all cost but it's just that they get thrown around a lot and often they are not the right tool for the job.
 
 If there's one thing browsers are good at, it's handling HTML.
 
@@ -157,7 +162,13 @@ const htmlEncodedString = htmlEncode(
 );
 ```
 
-## Convert to absolute URL
+Output:
+
+```
+Hello world &lt;img src="" onerror="alert('xss')" /&gt;
+```
+
+## Convert to absolute URL
 
 ```javascript
 const convertToAbsoluteUrl = (base, relativeUrl) => {
@@ -182,23 +193,28 @@ This technique leverages the build-in browser validation.
 Constraint Validation API: https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation
 
 ```javascript
-const validateEmail = (email) => {
+const validateEmail = (() => {
   const input = document.createElement("input");
 
   input.type = "email";
   input.required = true;
-  input.value = email;
 
-  return input.checkValidity();
-};
+  return (email) => {
+    input.value = email;
+
+    return input.checkValidity();
+  };
+})();
 
 const isValid = validateEmail(`test@example.com`);
 ```
 
-## Extract text from HTML
+This technique won't work server-side as it relies on the DOM API.
+
+## Extract text from HTML
 
 ```javascript
-const extractTextFromHtml = (html) => {
+const stripHtml = (html) => {
   const { documentElement } = new DOMParser().parseFromString(
     html,
     "text/html"
@@ -207,9 +223,13 @@ const extractTextFromHtml = (html) => {
   return documentElement.textContent;
 };
 
-const text = extractTextFromHtml(
-  `Hello world <img src="" onerror="alert('xss')" />`
-);
+const text = stripHtml(`Hello world <img src="" onerror="alert('xss')" />`);
+```
+
+Output:
+
+```
+Hello world
 ```
 
 ## Other techniques
