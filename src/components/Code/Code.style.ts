@@ -25,7 +25,9 @@ export const styles = {
       min-width: 100%;
       background: none !important;
       padding: 20px 60px 20px 20px;
+      font-family: var(--font-mono);
 
+      .title,
       .bold {
         font-weight: bold;
       }

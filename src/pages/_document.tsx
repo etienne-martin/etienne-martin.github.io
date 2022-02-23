@@ -14,6 +14,10 @@ export default class MyDocument extends Document {
             crossOrigin="anonymous"
           />
           <link rel="stylesheet" href="/fonts/Inter/Inter.css" />
+          <link
+            rel="stylesheet"
+            href="/fonts/JetBrainsMono/JetBrainsMono.css"
+          />
 
           {/* Taken from: https://css-tricks.com/how-to-favicon-in-2021/ */}
           <link rel="icon" href="/favicon.ico" sizes="any" />
