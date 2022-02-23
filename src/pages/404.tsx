@@ -1,5 +1,5 @@
-import { Link } from "../components/Link/Link";
-import { Heading } from "../components/Heading/Heading";
+import { Link } from "../components/Link";
+import { Heading } from "../components/Heading";
 
 const NotFoundPage = () => {
   return (

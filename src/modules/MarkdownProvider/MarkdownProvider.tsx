@@ -1,13 +1,13 @@
 import React, { FC } from "react";
 import { MDXProvider } from "@mdx-js/react";
-import { Heading } from "../../components/Heading/Heading";
-import { Paragraph } from "../../components/Paragraph/Paragraph";
-import { List } from "../../components/List/List";
-import { ListItem } from "../../components/ListItem/ListItem";
-import { Code } from "../../components/Code/Code";
-import { InlineCode } from "../../components/InlineCode/InlineCode";
+import { Heading } from "../../components/Heading";
+import { Paragraph } from "../../components/Paragraph";
+import { List } from "../../components/List";
+import { ListItem } from "../../components/ListItem";
+import { Code } from "../../components/Code";
+import { InlineCode } from "../../components/InlineCode";
 import { Image } from "../../components/Image";
-import { Link } from "../../components/Link/Link";
+import { Link } from "../../components/Link";
 import { Divider } from "../../components/Divider";
 
 const components = {

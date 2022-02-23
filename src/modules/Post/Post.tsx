@@ -1,10 +1,10 @@
 import React, { FC } from "react";
 import { Image } from "../../components/Image";
-import { Heading } from "../../components/Heading/Heading";
+import { Heading } from "../../components/Heading";
 import { styles } from "./Post.style";
-import { MarkdownContent } from "../../components/MarkdownContent/MarkdownContent";
+import { MarkdownContent } from "../../components/MarkdownContent";
 import { formatDate } from "../../utils/date";
-import { PageMetadata } from "../PageMetadata/PageMetadata";
+import { PageMetadata } from "../PageMetadata";
 import { Post as PostEntity } from "./Post.types";
 
 export interface PostPageProps {

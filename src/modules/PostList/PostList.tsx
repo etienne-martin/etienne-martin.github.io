@@ -1,8 +1,8 @@
 import React, { FC } from "react";
 import { styles } from "./PostList.style";
 import { Post } from "../Post/Post.types";
-import { PostCard } from "../PostCard/PostCard";
-import { Heading } from "../../components/Heading/Heading";
+import { PostCard } from "../PostCard";
+import { Heading } from "../../components/Heading";
 
 interface PostListProps {
   posts: Post[];

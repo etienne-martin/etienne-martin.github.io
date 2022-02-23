@@ -2,10 +2,10 @@ import React, { FC } from "react";
 import Link from "next/link";
 import { styles } from "./PostCard.style";
 import { Post } from "../Post/Post.types";
-import { Heading } from "../../components/Heading/Heading";
+import { Heading } from "../../components/Heading";
 import { formatDate } from "../../utils/date";
 import { Image } from "../../components/Image";
-import { Paragraph } from "../../components/Paragraph/Paragraph";
+import { Paragraph } from "../../components/Paragraph";
 
 interface PostCardProps {
   post: Post;
