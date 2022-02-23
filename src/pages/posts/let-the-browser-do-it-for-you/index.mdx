@@ -6,16 +6,16 @@ export const metadata = {
   imageAlt: "A little browser lifting weights",
 };
 
-Browsers are an incredible feat of engineering. Just to give you an idea, the Chromium codebase contains about [35 million lines of source code](<https://en.wikipedia.org/wiki/Chromium_(web_browser)#:~:text=35%20million%20source%20lines%20of%20code.>). It's honestly so mind boggling to me that they work at all.
+Browsers are an incredible feat of engineering. The Chromium codebase contains about [35 million lines of source code](<https://en.wikipedia.org/wiki/Chromium_(web_browser)#:~:text=35%20million%20source%20lines%20of%20code.>) according to wikipedia. It's honestly so mind boggling to me that they work at all.
 
-While browsers can do a lot of stuff, there are things we developers have to implement ourselves because they are not supported natively.
+While browsers can do a ton of stuff, there are things we developers have to implement ourselves because they are not supported natively.
 
 In those cases we either:
 
-- handcraft the missing functionality
-- install yet another package while wishing we didn't have to add another 50kb to our JavaScript bundle.
+- handcraft the missing functionality ourselves
+- install yet another package while wishing we didn't have to add another 50kb to our JavaScript bundle
 
-Using built-in browser features is not a novel idea. Choosing `border-radius` over sprites may sound obvious nowadays but we have to keep in mind that things move quickly. There are a lot of things we take for granted that were just hopes and dreams not long ago. Something that can't be done today might be possible next year so it's important to try to stay up to date with what's getting shipped.
+Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may sound obvious nowadays but we have to keep in mind that things move quickly. There are a lot of things we take for granted that were just hopes and dreams not long ago. Something that can't be done today might be possible next year so it's important to try to stay up to date with what's getting shipped.
 
 I've realised that once I have found a way of doing things, I tend to stick with it and accept it as the status quo. I'll be out there reusing techniques from my old bag of tricks without revisiting them to see if anything changed in the browser landscape.
 
@@ -209,7 +209,7 @@ const isValid = validateEmail(`test@example.com`);
 
 This technique won't work server-side as it relies on the DOM API.
 
-## Extract text from HTML
+## Extract text from HTML string
 
 ```javascript
 const stripHtml = (html) => {
