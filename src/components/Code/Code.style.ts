@@ -24,7 +24,7 @@ export const styles = {
       float: left;
       min-width: 100%;
       background: none !important;
-      padding: 20px 60px 20px 20px;
+      padding: 20px 0;
       font-family: var(--font-mono);
 
       .title,
@@ -40,5 +40,12 @@ export const styles = {
         text-decoration: line-through;
       }
     }
+  `,
+  line: css`
+    padding: 0 60px 0 20px;
+  `,
+  highlighted: css`
+    background: #574e83;
+    box-shadow: inset var(--primary-color) 4px 0 0;
   `,
 };

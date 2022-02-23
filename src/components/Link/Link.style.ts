@@ -9,6 +9,10 @@ export const styles = {
     &:hover,
     &:focus {
       box-shadow: 0 1px 0 0 currentColor;
+
+      code {
+        text-decoration: underline;
+      }
     }
   `,
 };
