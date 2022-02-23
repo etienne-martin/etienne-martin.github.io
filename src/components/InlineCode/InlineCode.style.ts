@@ -9,6 +9,7 @@ export const styles = {
     white-space: nowrap;
     background: #edebfb;
     font-family: var(--font-mono);
+    transition: background-color 0.25s;
 
     html[data-theme="dark"] & {
       background: #3f3764;

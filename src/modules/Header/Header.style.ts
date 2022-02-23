@@ -54,6 +54,7 @@ export const styles = {
     opacity: 0.75;
     transition: color 0.25s, opacity 0.25s;
     margin-left: 20px;
+    color: var(--foreground);
 
     &:hover,
     &:focus {

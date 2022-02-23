@@ -5,7 +5,7 @@ export const styles = {
     display: block;
     padding-left: 20px;
     position: relative;
-    line-height: 1.5em;
+    line-height: 1.8em;
 
     &:before {
       content: "";
