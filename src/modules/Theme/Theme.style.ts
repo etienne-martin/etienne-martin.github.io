@@ -16,7 +16,8 @@ export const theme = css`
       --font-size-s: 16px;
       --font-size-m: 18px;
       --font-size-l: 24px;
-      --font-size-xl: 36px;
+      --font-size-xl: 32px;
+      --font-size-xxl: 40px;
     }
 
     @media only screen and (max-width: 400px) {
@@ -26,6 +27,7 @@ export const theme = css`
         --font-size-m: 16px;
         --font-size-l: 18px;
         --font-size-xl: 24px;
+        --font-size-xxl: 32px;
       }
     }
 

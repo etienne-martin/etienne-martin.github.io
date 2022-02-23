@@ -19,7 +19,7 @@ export const styles = {
     }
 
     & > :is(h1, h2, h3, h4, h5, h6):not(:first-child) {
-      margin-top: 30px;
+      margin-top: 20px;
     }
   `,
 };

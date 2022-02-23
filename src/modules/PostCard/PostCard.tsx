@@ -27,9 +27,9 @@ export const PostCard: FC<PostCardProps> = ({ post }) => {
             />
           </div>
           <div className={styles.body}>
-            <Heading.h3 className={styles.title}>
+            <Heading.h4 as="h3" className={styles.title}>
               {post.metadata.title}
-            </Heading.h3>
+            </Heading.h4>
             <Paragraph className={styles.description}>
               {post.metadata.description}
             </Paragraph>

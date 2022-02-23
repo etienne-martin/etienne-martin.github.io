@@ -27,13 +27,13 @@ You have a choice as a developer, you can choose to go the hard way, or you can 
 
 I need to mention that it's not always possible to rely on some of the techniques below if you are building an isomorphic application since some of them rely on browser APIs that aren't available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749).
 
-## But why would you want to do that?
+### But why would you want to do that?
 
 The most obvious reasons for me is. Not only we don't have to spend time re-writing code that smarter people already wrote before us, we can also enjoy these benefits:
 
 - **It's fast** - Browser API are almost always going to be faster than their JavaScript counterpart.
 - **Size** - By relying on code that's shipped with the browser, we don't need to add yet another library which would increase the size of your JavaScript bundle.
-- **Robustness** - This code has been battle tested
+- **Robustness** - The code has been battle-tested.
 - **Maintainability** - The most maintainable code is no code at all.
 
 ## Dates
@@ -61,35 +61,47 @@ const removeAccents = (str) => {
 const output = removeAccents("Hétérogénéité");
 ```
 
-## Manipulating query strings
+## Playing with URLs
+
+Having to deal with URLs is super common when developing websites.
+
+### Manipulating query strings
 
 I've lost count of the number of times I've seen API calls like this:
 
 ```javascript
+const someValue = "someValue";
+const someOtherValue = "someOtherValue";
+const anotherValue = "anotherValue";
+
 fetch(
   `https://example.com?param1=${encodeURIComponent(
     someValue
   )}&param2=${encodeURIComponent(someOtherValue)}&param3=${encodeURIComponent(
-    yetAnotherValue
+    anotherValue
   )}`
 );
 ```
 
-(I'm guilty of that one too)
-
-While this technically works, there are many things wrong with this approach.
+While this works, there are many things wrong with this approach:
 
 - It is hard to read, even more so with prettier doing its best to keep the line length under control.
 - It's fragile, we're one bad keystroke away from messing up our URL.
 - `encodeURIComponent` doesn't properly encode some characters (+ vs %20 for spaces)
 
+In the past I've used the [qs](https://www.npmjs.com/package/qs) package to address these above issues but there is better alternative.
+
 There is this thing called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it happens to be really well supported.
 
 ```javascript
+const someValue = "someValue";
+const someOtherValue = "someOtherValue";
+const anotherValue = "anotherValue";
+
 const params = new URLSearchParams({
   param1: someValue,
   param2: someOtherValue,
-  param3: yetAnotherValue,
+  param3: anotherValue,
 });
 
 fetch(`https://example.com?${params}`);
@@ -97,7 +109,7 @@ fetch(`https://example.com?${params}`);
 
 This is even fully supported by Node.js since version 10 ✨
 
-## Parsing URLs
+### Parsing URLs
 
 Similar to the query string thing above, I've encountered this one plenty of times (disclaimer, I'm guilty of doing this too):
 

@@ -39,7 +39,9 @@ export const PostList: FC<PostListProps> = ({ posts }) => {
     <div className={styles.list}>
       {sortedGroups.map(([year, posts]) => (
         <section key={year} className={styles.list}>
-          <Heading.h2 className={styles.year}>{year}</Heading.h2>
+          <Heading.h3 as="h2" className={styles.year}>
+            {year}
+          </Heading.h3>
           {posts.map((post) => (
             <PostCard key={post.path} post={post} />
           ))}
