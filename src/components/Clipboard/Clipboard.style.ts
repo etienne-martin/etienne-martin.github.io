@@ -30,7 +30,7 @@ const button = css`
   }
 
   &:active .${tapSurface} {
-    color: var(--primary-color);
+    color: rgb(var(--color-primary));
   }
 `;
 

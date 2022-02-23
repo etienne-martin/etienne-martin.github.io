@@ -8,6 +8,7 @@ import { Code } from "../../components/Code/Code";
 import { InlineCode } from "../../components/InlineCode/InlineCode";
 import { Image } from "../../components/Image";
 import { Link } from "../../components/Link/Link";
+import { Divider } from "../../components/Divider";
 
 const components = {
   h1: Heading.h1,
@@ -16,6 +17,7 @@ const components = {
   h4: Heading.h4,
   h5: Heading.h5,
   h6: Heading.h6,
+  hr: Divider,
   p: Paragraph,
   ul: List,
   ol: List,

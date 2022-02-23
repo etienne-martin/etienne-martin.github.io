@@ -11,9 +11,8 @@ export const styles = {
 
     &:after {
       content: "";
-      border-top: dashed var(--foreground) 1px;
+      border-top: dashed rgba(var(--color-foreground), 0.15) 1px;
       display: block;
-      opacity: 0.15;
       flex-grow: 1;
       margin-left: 10px;
     }

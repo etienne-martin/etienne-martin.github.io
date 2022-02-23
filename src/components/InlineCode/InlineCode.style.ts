@@ -4,7 +4,7 @@ export const styles = {
   wrapper: css`
     border-radius: 5px;
     font-size: var(--font-size-m);
-    color: var(--primary-color);
+    color: rgb(var(--color-primary));
     padding: 0 5px;
     white-space: nowrap;
     background: #edebfb;

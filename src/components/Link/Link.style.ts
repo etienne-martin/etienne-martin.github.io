@@ -2,7 +2,7 @@ import { css } from "linaria";
 
 export const styles = {
   link: css`
-    color: var(--primary-color);
+    color: rgb(var(--color-primary));
     text-decoration: none;
     font-weight: 500;
 

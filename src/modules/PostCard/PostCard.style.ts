@@ -1,21 +1,20 @@
 import { css } from "linaria";
 
-const title = css`
-  transition: color 0.25s;
-`;
+const title = css``;
 
 export const styles = {
   card: css`
     a {
       display: flex;
-      color: var(--foreground);
+      color: rgb(var(--color-foreground));
+      transition: color 0.25s;
       text-decoration: none;
       align-items: center;
 
       &:hover,
       &:focus {
         .${title} {
-          color: var(--primary-color);
+          color: rgb(var(--color-primary));
         }
       }
     }

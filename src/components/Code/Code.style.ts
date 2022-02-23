@@ -46,6 +46,6 @@ export const styles = {
   `,
   highlighted: css`
     background: #574e83;
-    box-shadow: inset var(--primary-color) 4px 0 0;
+    box-shadow: inset rgb(var(--color-primary)) 4px 0 0;
   `,
 };

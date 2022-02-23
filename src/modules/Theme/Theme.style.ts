@@ -3,10 +3,10 @@ import { css } from "linaria";
 export const theme = css`
   :global() {
     :root {
-      --background: white;
-      --foreground: #2a2734;
+      --color-background: 255, 255, 255;
+      --color-foreground: 42, 39, 52;
+      --color-primary: 154, 134, 253;
       --radius: 8px;
-      --primary-color: #9a86fd;
 
       --font-variable: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
         "Helvetica Neue", sans-serif;
@@ -30,8 +30,8 @@ export const theme = css`
     }
 
     [data-theme="dark"] {
-      --background: #2a2734;
-      --foreground: white;
+      --color-background: 42, 39, 52;
+      --color-foreground: 255, 255, 255;
     }
 
     * {
@@ -58,8 +58,8 @@ export const theme = css`
       font-family: var(--font-variable);
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       -webkit-text-size-adjust: none;
-      background: var(--background);
-      color: var(--foreground);
+      background: rgb(var(--color-background));
+      color: rgb(var(--color-foreground));
       transition: color 0.25s, background-color 0.25s;
     }
   }

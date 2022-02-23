@@ -40,12 +40,12 @@ export const Post: FC<PostPageProps> = ({ path, readingTime }) => {
         type="article"
       />
       <MarkdownContent>
-        <div>
+        <header>
           <Heading.h1 className={styles.title}>{metadata.title}</Heading.h1>
           <p className={styles.small}>
             {formatDate(new Date(metadata.date))} • {readingTime}
           </p>
-        </div>
+        </header>
         <Image
           alt={metadata.imageAlt}
           src={metadata.image.src}

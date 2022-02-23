@@ -13,19 +13,19 @@ export const styles = {
   `,
   homeLink: css`
     text-decoration: none;
-    color: var(--foreground);
+    color: rgb(var(--color-foreground));
+    transition: color 0.25s;
     display: flex;
     align-items: center;
 
     &:hover,
     &:focus {
       strong {
-        color: var(--primary-color);
+        color: rgb(var(--color-primary));
       }
     }
 
     strong {
-      transition: color 0.25s;
       font-weight: 800;
       display: block;
       margin-bottom: 5px;
@@ -40,7 +40,6 @@ export const styles = {
   photo: css`
     && {
       width: 60px;
-      image-rendering: -webkit-optimize-contrast;
       margin-right: 20px;
       border-radius: 100px;
     }
@@ -54,12 +53,12 @@ export const styles = {
     opacity: 0.75;
     transition: color 0.25s, opacity 0.25s;
     margin-left: 20px;
-    color: var(--foreground);
+    color: rgb(var(--color-foreground));
 
     &:hover,
     &:focus {
       opacity: 1;
-      color: var(--primary-color);
+      color: rgb(var(--color-primary));
     }
 
     svg {

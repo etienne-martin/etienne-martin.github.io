@@ -16,8 +16,8 @@ export const styles = {
       height: 5px;
       transform: rotate(45deg);
       border-radius: 2px;
-      border-top: solid var(--primary-color) 2px;
-      border-right: solid var(--primary-color) 2px;
+      border-top: solid rgb(var(--color-primary)) 2px;
+      border-right: solid rgb(var(--color-primary)) 2px;
     }
   `,
 };
