@@ -36,50 +36,35 @@ The most obvious reasons for me is. Not only we don't have to spend time re-writ
 - **Robustness** - The code has been battle-tested.
 - **Maintainability** - The most maintainable code is no code at all.
 
-## Dates
+## URLs
 
-If there's one thing a developer shouldn't have to deal with, it's dates, more specifically: timezones.
+Dealing with URLs is super common when developing websites. It's also super hard to get right if trying to do it by hand. There are so many edge cases, better let the browser handle them.
 
-## Lazy Loading Images
-
-This one's pretty new so it's not fully supported by every browser yet. As of this writing, Safari is still lagging behind. Even though not every browser supports it, it can still be a good progressive enhancement.
-data-src, the disadvantage of such approach is that…
-
-```html
-<img src="..." width="100" height="100" alt="..." loading="lazy" />
-```
-
-## Removing Accents/Diacritics in a String
-
-Gone are the days where we had to use lodash's [`deburr`](https://lodash.com/docs/4.17.15#deburr) function to remove accents from a string.
+### Query String Parsing
 
 ```javascript
-const removeAccents = (str) => {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const parseQueryString = (queryString) => {
+  return Object.fromEntries(new URLSearchParams(queryString).entries());
 };
 
-const output = removeAccents("Hétérogénéité");
+const queryParams = parseQueryString(`?query=1&test=Hello%20World`);
+
+console.log(queryParams);
 ```
-
-## Playing with URLs
-
-Having to deal with URLs is super common when developing websites.
 
 ### Manipulating query strings
 
 I've lost count of the number of times I've seen API calls like this:
 
 ```javascript
-const someValue = "someValue";
-const someOtherValue = "someOtherValue";
-const anotherValue = "anotherValue";
+const someString = "someString";
+const someBoolean = true;
+const someNumber = 42;
 
-fetch(
-  `https://example.com?param1=${encodeURIComponent(
-    someValue
-  )}&param2=${encodeURIComponent(someOtherValue)}&param3=${encodeURIComponent(
-    anotherValue
-  )}`
+await fetch(
+  `https://example.com?a=${encodeURIComponent(
+    someString
+  )}&b=${someBoolean}&c=${someNumber}`
 );
 ```
 
@@ -87,60 +72,78 @@ While this works, there are many things wrong with this approach:
 
 - It is hard to read, even more so with prettier doing its best to keep the line length under control.
 - It's fragile, we're one bad keystroke away from messing up our URL.
-- `encodeURIComponent` doesn't properly encode some characters (+ vs %20 for spaces)
+- We have to remember to call `encodeURIComponent` to properly encode string parameters
 
-In the past I've used the [qs](https://www.npmjs.com/package/qs) package to address these above issues but there is better alternative.
+In the past I've used the [qs](https://www.npmjs.com/package/qs) package to address all the above but there is better alternative.
 
 There is this thing called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it happens to be really well supported.
 
 ```javascript
-const someValue = "someValue";
-const someOtherValue = "someOtherValue";
-const anotherValue = "anotherValue";
+const someString = "someString";
+const someBoolean = true;
+const someNumber = 42;
 
-const params = new URLSearchParams({
-  param1: someValue,
-  param2: someOtherValue,
-  param3: anotherValue,
+const queryString = new URLSearchParams({
+  a: someString,
+  b: someBoolean,
+  c: someNumber,
 });
 
-fetch(`https://example.com?${params}`);
+await fetch(`https://example.com?${queryString}`);
 ```
 
+Compared to the first example above, I think this looks much cleaner.
+
 This is even fully supported by Node.js since version 10 ✨
+
+### Manipulating URLs
+
+I gave birth to this monstrosity more than once:
+
+```javascript
+const queryString = "http://localhost?test=1".split("?")[1];
+
+console.log(queryString);
+```
+
+It's a quick and dirty way of extracting a query string from a URL but it's brittle. Depending on the data you're dealing with, you might have urls that also includes a fragment (`#anchor`).
+
+```javascript
+console.log("http://localhost?test=1#hash".split("?")[1]);
+```
 
 ### Parsing URLs
 
 Similar to the query string thing above, I've encountered this one plenty of times (disclaimer, I'm guilty of doing this too):
 
 ```javascript
-const url = new URL(
-  "https://username:password@example.com:3000/path?query=1#hash"
+console.log(
+  new URL("https://username:password@example.com:3000/path?query=1#hash")
+);
+```
+
+### Absolute URLs
+
+The `URL` constructor can also be used for converting relative URLs into absolute ones, similar to `url.resolve` in Node.js.
+
+```javascript
+const convertToAbsoluteUrl = (base, relativeUrl) => {
+  return new URL(relativeUrl, base).toString();
+};
+
+const absoluteUrl = convertToAbsoluteUrl(
+  "https://base-url/path/",
+  "../relative-path"
 );
 
-console.log(url);
+console.log(absoluteUrl);
+console.log(absoluteUrl);
+console.log(absoluteUrl);
 ```
 
-Output:
+## Strings
 
-```
-{
-  hash: "#hash",
-  host: "example.com:3000",
-  hostname: "example.com",
-  href: "https://username:password@example.com:3000/path?query=1#hash",
-  origin: "https://example.com:3000",
-  password: "password",
-  pathname: "/path",
-  port: "3000",
-  protocol: "https:",
-  search: "?query=1",
-  searchParams: URLSearchParams {},
-  username: "username"
-}
-```
-
-## HTML String Encoding
+### HTML String Encoding
 
 - using a [textNode](http://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode)
 - using a [link to another page](/) with a piece of `inline code`
@@ -158,42 +161,53 @@ Personally, the more I can stay away from regexes, the better. I'm not saying re
 If there's one thing browsers are good at, it's handling HTML.
 
 ```javascript
-const htmlEncode = (str) => {
+const encodeHtml = (() => {
   const textarea = document.createElement("textarea");
-  const textNode = document.createTextNode(str);
 
-  textarea.appendChild(textNode);
+  return (str) => {
+    textarea.innerHTML = "";
+    textarea.appendChild(new Text(str));
 
-  return textarea.innerHTML;
-};
+    return textarea.innerHTML;
+  };
+})();
 
-const htmlEncodedString = htmlEncode(
+const htmlEncodedString = encodeHtml(
   `Hello world <img src="" onerror="alert('xss')" />`
 );
+
+console.log(htmlEncodedString);
 ```
 
-Output:
-
-```
-Hello world &lt;img src="" onerror="alert('xss')" /&gt;
-```
-
-## Convert to absolute URL
+### Extract text from HTML string
 
 ```javascript
-const convertToAbsoluteUrl = (base, relativeUrl) => {
-  return new URL(relativeUrl, base).toString();
+const stripHtml = (html) => {
+  const { documentElement } = new DOMParser().parseFromString(
+    html,
+    "text/html"
+  );
+
+  return documentElement.textContent;
 };
+
+const text = stripHtml(`Hello world <img src="" onerror="alert('xss')" />`);
+
+console.log(text);
 ```
 
-## Query String Parsing
+### Removing Accents in a String
+
+Gone are the days where we had to use lodash's [`deburr`](https://lodash.com/docs/4.17.15#deburr) function to remove accents from a string.
 
 ```javascript
-const parseQueryString = (query) => {
-  return Object.fromEntries(new URLSearchParams(query).entries());
+const removeAccents = (str) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 };
 
-const queryParams = parseQueryString(`?query=1&test=2`);
+const output = removeAccents("Hétérogénéité");
+
+console.log(output);
 ```
 
 ## Email Address Validation
@@ -216,30 +230,24 @@ const validateEmail = (() => {
   };
 })();
 
-const isValid = validateEmail(`test@example.com`);
+console.log(validateEmail(`test@example.com`));
+console.log(validateEmail(`test@localhost`));
+console.log(validateEmail(`not-an-email`));
 ```
 
-This technique won't work server-side as it relies on the DOM API.
+This technique won't work server-side as it relies on the DOM API but this doesn't mean that you shouldn't validate email addresses on the backend too.
 
-## Extract text from HTML string
+## Dates
 
-```javascript
-const stripHtml = (html) => {
-  const { documentElement } = new DOMParser().parseFromString(
-    html,
-    "text/html"
-  );
+If there's one thing a developer shouldn't have to deal with, it's dates, more specifically: timezones.
 
-  return documentElement.textContent;
-};
+## Lazy Loading Images
 
-const text = stripHtml(`Hello world <img src="" onerror="alert('xss')" />`);
-```
+This one's pretty new so it's not fully supported by every browser yet. As of this writing, Safari is still lagging behind. Even though not every browser supports it, it can still be a good progressive enhancement.
+data-src, the disadvantage of such approach is that…
 
-Output:
-
-```
-Hello world
+```html
+<img src="..." width="100" height="100" alt="..." loading="lazy" />
 ```
 
 ## Other techniques

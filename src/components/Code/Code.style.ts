@@ -8,6 +8,8 @@ export const styles = {
     border-radius: var(--radius);
     font-size: var(--font-size-s);
     line-height: 1.5em;
+    overflow: hidden;
+    cursor: text;
   `,
   clipboard: css`
     && {
@@ -16,36 +18,7 @@ export const styles = {
       right: 15px;
     }
   `,
-  container: css`
+  scroll: css`
     overflow-x: auto;
-
-    & > code {
-      display: block;
-      float: left;
-      min-width: 100%;
-      background: none !important;
-      padding: 20px 0;
-      font-family: var(--font-mono);
-
-      .title,
-      .bold {
-        font-weight: bold;
-      }
-
-      .italic {
-        font-style: italic;
-      }
-
-      .strike {
-        text-decoration: line-through;
-      }
-    }
-  `,
-  line: css`
-    padding: 0 60px 0 20px;
-  `,
-  highlighted: css`
-    background: #574e83;
-    box-shadow: inset rgb(var(--color-primary)) 4px 0 0;
   `,
 };

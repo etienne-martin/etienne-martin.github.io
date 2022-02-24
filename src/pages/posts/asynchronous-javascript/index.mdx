@@ -1,0 +1,128 @@
+export const metadata = {
+  date: "2022-02-18T19:26:54.937Z",
+  title: "Asynchronous JavaScript",
+  description: "A dummy description",
+  image: require("./browser.png"),
+  imageAlt: "A little browser lifting weights",
+};
+
+Synchronous JavaScript is pretty straight forward to reason about, you type in some code, and it runs sequentially until it's done.
+
+## For Each
+
+I remember being absolutely confused the first time I wrote the following code.
+
+```javascript
+const slowOperation = () => {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+};
+
+[1, 2, 3].forEach(async () => {
+  console.log("Fired!");
+  await slowOperation();
+  console.log("Resolved.");
+});
+
+console.log("We're done right?");
+```
+
+## Maps
+
+```javascript
+const slowOperation = () => {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+};
+
+await Promise.all(
+  [1, 2, 3].map(async () => {
+    console.log("Fired!");
+    await slowOperation();
+    console.log("Resolved.");
+  })
+);
+
+console.log("We're done!");
+```
+
+## For loops
+
+```javascript
+const slowOperation = () => {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+};
+
+for (const item of [1, 2, 3]) {
+  console.log("Fired!");
+  await slowOperation();
+  console.log("Resolved.");
+}
+
+console.log("We're done!");
+```
+
+## Dependencies between calls
+
+Let's say you have multiple asynchronous operations that depend on the result of other promises,
+the short answer is that you can't take advantage of parallelism and you have wait sequentially.
+
+```javascript
+const slowIncrement = (num) => {
+  return new Promise((resolve) => setTimeout(() => resolve(num + 1), 500));
+};
+
+const op1 = await slowIncrement(0);
+const op2 = await slowIncrement(op1);
+const op3 = await slowIncrement(op2);
+
+console.log(op1, op2, op3);
+```
+
+With this you get a waterfall effect. There's not much you can do about it to make it faster.
+
+Sometimes this is more subtle than that. Depending on the dependencies between calls you can sometimes parallelize _some_ parts of the code while keeping others waiting:
+
+```javascript
+const slowOperation = () => {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+};
+
+const pendingOp1 = slowOperation();
+
+const op2 = await slowOperation();
+
+const [op3, op1] = await Promise.all([slowOperation(op2), pendingOp1]);
+
+console.log(op1, op2, op3);
+```
+
+## Error handling
+
+Should be fulfilled
+
+```javascript
+await Promise.reject(43).catch(() => {
+  return 1;
+});
+console.log("123");
+```
+
+Should be rejected
+
+```javascript
+await Promise.reject(43);
+console.log("123");
+```
+
+Should be rejected too
+
+```javascript
+throw new Error("awd");
+console.log("123");
+```
+
+Should log an unhandled promise
+
+```javascript
+Promise.reject(43);
+console.log("123");
+```

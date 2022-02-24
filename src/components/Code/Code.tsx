@@ -1,9 +1,9 @@
 import { FC } from "react";
-import Highlight, { Language, Prism } from "prism-react-renderer";
-import darkTheme from "prism-react-renderer/themes/dracula";
+import { Language } from "prism-react-renderer";
 import { styles } from "./Code.style";
-import { Clipboard } from "../Clipboard/Clipboard";
-import classnames from "classnames";
+import { Clipboard } from "../Clipboard";
+import { SyntaxHighlighting } from "../SyntaxHighlighting";
+import { CodeRunner } from "../CodeRunner";
 
 interface CodeProps {
   children?: string;
@@ -11,52 +11,24 @@ interface CodeProps {
   highlight?: string;
 }
 
-export const Code: FC<CodeProps> = ({
-  children,
-  className,
-  highlight,
-  ...otherProps
-}) => {
-  const language = (className?.replace(/^language-/, "") as Language) ?? "";
+export const Code: FC<CodeProps> = ({ children, className, highlight }) => {
+  const language = (className?.replace(/^language-/, "") ?? "") as Language;
   const code = children?.trim() ?? "";
 
-  const highlightLines =
+  const highlightedLines =
     highlight?.split(",").map((line) => parseInt(line, 10)) ?? [];
 
   return (
     <div className={styles.wrapper}>
       <Clipboard text={code} className={styles.clipboard} />
-      <div className={styles.container}>
-        <Highlight
-          Prism={Prism}
-          theme={darkTheme}
+      <div className={styles.scroll}>
+        <SyntaxHighlighting
           code={code}
           language={language}
-        >
-          {({ className, style, tokens, getLineProps, getTokenProps }) => (
-            <code className={className} style={style}>
-              {tokens.map((line, key) => {
-                const { className, ...lineProps } = getLineProps({ line });
-                const lineNumber = key + 1;
-
-                return (
-                  <div
-                    key={key}
-                    className={classnames(className, styles.line, {
-                      [styles.highlighted]: highlightLines.includes(lineNumber),
-                    })}
-                    {...lineProps}
-                  >
-                    {line.map((token, key) => (
-                      <span key={key} {...getTokenProps({ token })} />
-                    ))}
-                  </div>
-                );
-              })}
-            </code>
-          )}
-        </Highlight>
+          highlightedLines={highlightedLines}
+        />
       </div>
+      <CodeRunner code={code} />
     </div>
   );
 };
