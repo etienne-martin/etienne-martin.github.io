@@ -51,24 +51,36 @@ export const useCodeExecution = (code: string) => {
       }
     }
 
-    const runner = new AsyncFunction(
-      "console",
-      "fetch",
-      "Promise",
-      `return (async () => {${code}})()`
-    );
-
     const timer = new Timer();
-    const execution = runner(mockedConsole, mockedFetch, MonkeyPatchedPromise);
 
-    Promise.allSettled([execution, ...pendingPromises]).then(
-      ([executionResult]) => {
-        if (hasUnmountedRef.current) return;
+    try {
+      const runner = new AsyncFunction(
+        "console",
+        "fetch",
+        "Promise",
+        `return (async () => {
+          ${code}
+        })()`
+      );
 
-        setStatus(executionResult.status);
-        setExecutionTime(timer.elapsed());
-      }
-    );
+      const execution = runner(
+        mockedConsole,
+        mockedFetch,
+        MonkeyPatchedPromise
+      );
+
+      Promise.allSettled([execution, ...pendingPromises]).then(
+        ([executionResult]) => {
+          if (hasUnmountedRef.current) return;
+
+          setStatus(executionResult.status);
+          setExecutionTime(timer.elapsed());
+        }
+      );
+    } catch (err) {
+      setStatus("rejected");
+      setExecutionTime(timer.elapsed());
+    }
 
     return () => {
       hasUnmountedRef.current = true;

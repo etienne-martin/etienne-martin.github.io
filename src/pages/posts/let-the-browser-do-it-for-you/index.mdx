@@ -15,11 +15,11 @@ In those cases we either:
 - handcraft the missing functionality ourselves
 - install yet another package while wishing we didn't have to add another 50kb to our JavaScript bundle
 
-Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may sound obvious nowadays but we have to keep in mind that things move quickly. There are a lot of things we take for granted that were just hopes and dreams not long ago. Something that can't be done today might be possible next year so it's important to try to stay up to date with what's getting shipped.
+Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may sound obvious nowadays but we have to keep in mind that things move quickly. There are a lot of things we take for granted that were just hopes and dreams not long ago. Something that can't be done today might be possible next year so it's important to keep up with what's getting shipped.
 
-I've realised that once I have found a way of doing things, I tend to stick with it and accept it as the status quo. I'll be out there reusing techniques from my old bag of tricks without revisiting them to see if anything changed in the browser landscape.
+I've realised that once I have found a way of doing something, I tend to stick with it and accept it as the status quo. I'll be out there reusing techniques from my old bag of tricks without revisiting them to see if anything changed in the browser landscape.
 
-This post is mostly a reminder to myself that I don't always need to re-invent the wheel and that I can, in most cases, and sometimes with a bit of patience, rely on the browser to do the heavy lifting for me.
+This post is mostly a reminder to myself that I don't always need to re-invent the wheel and that I can, in most cases, rely on the browser to do the heavy lifting for me.
 
 You have a choice as a developer, you can choose to go the hard way, or you can **let the browser do it for you**.
 
@@ -38,13 +38,24 @@ The most obvious reasons for me is. Not only we don't have to spend time re-writ
 
 ## URLs
 
-Dealing with URLs is super common when developing websites. It's also super hard to get right if trying to do it by hand. There are so many edge cases, better let the browser handle them.
+Let's start with the basics. Dealing with URLs is super common when developing websites. It's also super hard to get right if trying to do it by hand. There are so many edge cases, better let the browser handle them.
 
 ### Query String Parsing
 
+There is this thing called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it's super handy when you need to extract values from a query string.
+
+```javascript
+const queryParams = new URLSearchParams("?query=1&test=Hello%20World");
+
+console.log(queryParams.get("query"));
+console.log(queryParams.get("test"));
+```
+
+A little bonus function for parsing a query string into a plain object:
+
 ```javascript
 const parseQueryString = (queryString) => {
-  return Object.fromEntries(new URLSearchParams(queryString).entries());
+  return Object.fromEntries(new URLSearchParams(queryString));
 };
 
 const queryParams = parseQueryString(`?query=1&test=Hello%20World`);
@@ -98,28 +109,78 @@ This is even fully supported by Node.js since version 10 ✨
 
 ### Manipulating URLs
 
-First off, don't do this. I gave birth to this monstrosity more than once:
+I think we've all been there before, we're in a rush, and we need to extract some data from a URL.
+So we whip out the `slice` method, start slicing pieces off and we eventually end up giving birth to a monstrosity that barely works.
 
 ```javascript
-const queryString = "http://localhost?test=1".split("?")[1];
+// 🚫 Don't do this
+const extractQueryStringFromUrl = (url) => {
+  return url.slice(url.indexOf("?") + 1);
+};
 
-console.log(queryString);
+// Works
+console.log(extractQueryStringFromUrl("http://localhost?test=1"));
+
+// Fails
+console.log(extractQueryStringFromUrl("http://localhost?test=1#hash"));
+console.log(extractQueryStringFromUrl("http://localhost"));
 ```
 
-It's a quick and dirty way of extracting a query string from a URL but it's brittle. Depending on the data you're dealing with, you might have urls that also includes a fragment (`#anchor`).
+**Parsing URLs is hard**, and doing it by hand is rarely a good idea.
+
+Luckily, browsers can parse URLs with a single line of code:
 
 ```javascript
-console.log("http://localhost?test=1#hash".split("?")[1]);
+const url = new URL("https://example.com:3000/path?test=1#hash");
+
+console.log(url.protocol);
+console.log(url.hostname);
+console.log(url.pathname);
+console.log(url.search);
+console.log(url.hash);
+// And many others...
 ```
 
-### Parsing URLs
-
-Similar to the query string thing above, I've encountered this one plenty of times (disclaimer, I'm guilty of doing this too):
+Here's a little bonus code snippet if you ever need to convert a URL into a plain object:
 
 ```javascript
-console.log(
-  new URL("https://username:password@example.com:3000/path?query=1#hash")
+const parseUrl = (url) => {
+  const {
+    origin,
+    protocol,
+    username,
+    password,
+    host,
+    hostname,
+    port,
+    pathname,
+    search,
+    searchParams,
+    hash,
+    href,
+  } = new URL(url);
+
+  return {
+    origin,
+    protocol,
+    username,
+    password,
+    host,
+    hostname,
+    port,
+    pathname,
+    search,
+    searchParams: Object.fromEntries(searchParams),
+    hash,
+    href,
+  };
+};
+
+const url = parseUrl(
+  "https://username:password@example.com:3000/path?query=1#hash"
 );
+
+console.log(url);
 ```
 
 ### Absolute URLs
@@ -131,14 +192,11 @@ const convertToAbsoluteUrl = (base, relativeUrl) => {
   return new URL(relativeUrl, base).toString();
 };
 
-const absoluteUrl = convertToAbsoluteUrl(
-  "https://base-url/path/",
-  "../relative-path"
-);
+const BASE_URL = "https://base-url/path/";
 
-console.log(absoluteUrl);
-console.log(absoluteUrl);
-console.log(absoluteUrl);
+console.log(convertToAbsoluteUrl(BASE_URL, "/relative-path"));
+console.log(convertToAbsoluteUrl(BASE_URL, "relative-path"));
+console.log(convertToAbsoluteUrl(BASE_URL, "../relative-path"));
 ```
 
 ## Strings
