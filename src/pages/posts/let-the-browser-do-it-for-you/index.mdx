@@ -115,7 +115,7 @@ So we whip out the `slice` method, start slicing pieces off and we eventually en
 ```javascript
 // 🚫 Don't do this
 const extractQueryStringFromUrl = (url) => {
-  return url.slice(url.indexOf("?") + 1);
+  return url.slice(url.indexOf("?"));
 };
 
 // Works
@@ -128,7 +128,7 @@ console.log(extractQueryStringFromUrl("http://localhost"));
 
 **Parsing URLs is hard**, and doing it by hand is rarely a good idea.
 
-Luckily, browsers can parse URLs with a single line of code:
+Luckily, browsers can do that for us, and it's a single line of code:
 
 ```javascript
 const url = new URL("https://example.com:3000/path?test=1#hash");
@@ -214,7 +214,7 @@ If you look on the internet for how to html-encode a piece of text, you will mos
 - [How to encode a string in JavaScript for displaying in HTML?](https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html)
 - [How to escape HTML](https://stackoverflow.com/questions/3043775/how-to-escape-html)
 
-Personally, the more I can stay away from regexes, the better. I'm not saying rexeges should be avoided at all cost but it's just that they get thrown around a lot and often they are not the right tool for the job.
+Personally, the more I can stay away from regexes, the better. I'm not saying rexeges should be avoided at all cost but it's just that they get thrown around a lot and are often not the right tool for the job.
 
 If there's one thing browsers are good at, it's handling HTML.
 
