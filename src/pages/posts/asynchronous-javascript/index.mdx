@@ -14,7 +14,7 @@ I remember being absolutely confused the first time I wrote the following code.
 
 ```javascript
 const slowOperation = () => {
-  return new Promise((resolve) => setTimeout(resolve, 500));
+  return new Promise((resolve) => setTimeout(resolve, 250));
 };
 
 [1, 2, 3].forEach(async () => {
@@ -30,7 +30,7 @@ console.log("We're done right?");
 
 ```javascript
 const slowOperation = () => {
-  return new Promise((resolve) => setTimeout(resolve, 500));
+  return new Promise((resolve) => setTimeout(resolve, 250));
 };
 
 await Promise.all(
@@ -48,7 +48,7 @@ console.log("We're done!");
 
 ```javascript
 const slowOperation = () => {
-  return new Promise((resolve) => setTimeout(resolve, 500));
+  return new Promise((resolve) => setTimeout(resolve, 250));
 };
 
 for (const item of [1, 2, 3]) {
@@ -67,7 +67,7 @@ the short answer is that you can't take advantage of parallelism and you have wa
 
 ```javascript
 const slowIncrement = (num) => {
-  return new Promise((resolve) => setTimeout(() => resolve(num + 1), 500));
+  return new Promise((resolve) => setTimeout(() => resolve(num + 1), 250));
 };
 
 const op1 = await slowIncrement(0);
@@ -83,7 +83,7 @@ Sometimes this is more subtle than that. Depending on the dependencies between c
 
 ```javascript
 const slowOperation = () => {
-  return new Promise((resolve) => setTimeout(resolve, 500));
+  return new Promise((resolve) => setTimeout(resolve, 250));
 };
 
 const pendingOp1 = slowOperation();

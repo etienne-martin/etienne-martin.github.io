@@ -9,6 +9,7 @@ const tapSurface = css`
   color: rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
+  transition: color 0.25s;
 
   svg {
     width: 100%;
@@ -26,7 +27,6 @@ const button = css`
 
   &:hover .${tapSurface}, &:focus .${tapSurface} {
     color: #fff;
-    transition: color 0.25s;
   }
 
   &:active .${tapSurface} {

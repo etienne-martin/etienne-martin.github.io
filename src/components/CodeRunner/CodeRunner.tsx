@@ -1,7 +1,7 @@
-import { FC, useEffect } from "react";
+import { FC } from "react";
 import { Language } from "prism-react-renderer";
-import { useInView } from "react-intersection-observer";
 import serialize from "serialize-javascript";
+import classnames from "classnames";
 import { styles } from "./CodeRunner.style";
 import { SyntaxHighlighting } from "../SyntaxHighlighting";
 import { useCodeExecution } from "./CodeRunner.hook";
@@ -13,27 +13,29 @@ interface ConsoleProps {
 }
 
 export const CodeRunner: FC<ConsoleProps> = ({ code }) => {
-  const { ref, inView } = useInView();
   const { isExecutable, execute, logs, status, executionTime } =
     useCodeExecution(code);
-
-  useEffect(() => {
-    if (!inView || status !== "idle") return;
-    execute();
-  }, [inView, status, execute]);
+  const isLongRunningTask = executionTime > 50;
 
   if (!isExecutable) return null;
 
   return (
-    <div className={styles.wrapper} ref={ref}>
+    <div className={styles.wrapper}>
       <div className={styles.scroll}>
         <div className={styles.header}>
           <Heading.h6 as="h3" className={styles.label}>
             Console:
           </Heading.h6>
-          <button className={styles.replay} onClick={() => execute()}>
-            <ReplayIcon />
-          </button>
+          {isLongRunningTask && (
+            <button
+              disabled={status === "pending"}
+              className={styles.replay}
+              onClick={() => execute()}
+            >
+              Replay
+              <ReplayIcon />
+            </button>
+          )}
         </div>
         <div className={styles.console}>
           {logs.map(({ tokens, type }, index) => {
@@ -66,10 +68,12 @@ export const CodeRunner: FC<ConsoleProps> = ({ code }) => {
         </div>
         <div className={styles.footer}>
           {status === "pending" && (
-            <div className={styles.status}>Running...</div>
+            <div className={classnames(styles.status, styles.pending)}>
+              Running
+            </div>
           )}
 
-          {status === "fulfilled" && (
+          {status === "fulfilled" && isLongRunningTask && (
             <div className={styles.status}>
               Execution time: {executionTime}ms
             </div>

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Timer } from "../../utils/timer";
 
 type Log = { tokens: any[]; type: "output" | "Request" };
@@ -33,10 +33,9 @@ export const useCodeExecution = (code: string) => {
       },
     };
 
-    const mockedFetch: (...args: Parameters<typeof fetch>) => void = (
-      input,
-      init
-    ) => {
+    const mockedFetch: (
+      ...args: Parameters<typeof fetch>
+    ) => Promise<any> = async (input, init) => {
       appendLog({
         type: "Request",
         tokens: [`${init?.method ?? "GET"} ${input}`],
@@ -75,6 +74,10 @@ export const useCodeExecution = (code: string) => {
       hasUnmountedRef.current = true;
     };
   }, [isExecutable, code]);
+
+  useEffect(() => {
+    execute();
+  }, [execute]);
 
   return { isExecutable, execute, logs, status, executionTime };
 };
