@@ -10,7 +10,7 @@ export const styles = {
     &:before {
       content: "";
       position: absolute;
-      top: 0.6em;
+      top: 0.7em;
       left: 0;
       width: 5px;
       height: 5px;

@@ -73,11 +73,16 @@ export const useCodeExecution = (code: string) => {
         ([executionResult]) => {
           if (hasUnmountedRef.current) return;
 
+          if (executionResult.status === "rejected") {
+            console.log(executionResult.reason);
+          }
+
           setStatus(executionResult.status);
           setExecutionTime(timer.elapsed());
         }
       );
     } catch (err) {
+      console.error(err);
       setStatus("rejected");
       setExecutionTime(timer.elapsed());
     }

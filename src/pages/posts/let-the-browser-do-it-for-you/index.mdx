@@ -8,127 +8,52 @@ export const metadata = {
 
 Browsers are an incredible feat of engineering. According to wikipedia, the Chromium codebase contains about [35 million lines of source code](<https://en.wikipedia.org/wiki/Chromium_(web_browser)#:~:text=35%20million%20source%20lines%20of%20code.>). It's honestly so mind boggling to me that they work at all.
 
-While browsers can do a ton of stuff, there are features we developers have to implement ourselves because they are not supported natively.
-
-In those cases we either:
-
-- handcraft the missing functionality ourselves
-- install yet another package while wishing we didn't have to add another 50kb to our JavaScript bundle
-
-Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may sound obvious nowadays but we have to keep in mind that things move quickly. There are a lot of things we take for granted that were just hopes and dreams not long ago. Something that can't be done today might be possible next year so it's important to keep up with what's getting shipped.
+Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may seem obvious nowadays but it was not always the case. There are a lot of things we take for granted that were just hopes and dreams not long ago.
 
 I've realised that once I have found a way of doing something, I tend to stick with it and accept it as the status quo. I'll be out there reusing techniques from my old bag of tricks without revisiting them to see if anything changed in the browser landscape.
 
 This post is mostly a reminder to myself that I don't always need to re-invent the wheel and that I can, in most cases, rely on the browser to do the heavy lifting for me.
 
-You have a choice as a developer, you can choose to go the hard way, or you can **let the browser do it for you**.
+---
 
-## Before we start
+_It's not always possible to rely on some of the techniques below if you are building an isomorphic application since some of them rely on browser APIs that aren't available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749)._
 
-I need to mention that it's not always possible to rely on some of the techniques below if you are building an isomorphic application since some of them rely on browser APIs that aren't available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749).
-
-### But why would you want to do that?
-
-The most obvious reasons for me is. Not only we don't have to spend time re-writing code that smarter people already wrote before us, we can also enjoy these benefits:
-
-- **It's fast** - Browser API are almost always going to be faster than their JavaScript counterpart.
-- **Size** - By relying on code that's shipped with the browser, we don't need to add yet another library which would increase the size of your JavaScript bundle.
-- **Robustness** - The code has been battle-tested.
-- **Maintainability** - The most maintainable code is no code at all.
+---
 
 ## URLs
 
-Let's start with the basics. Dealing with URLs is super common when developing websites. It's also super hard to get right if trying to do it by hand. There are so many edge cases, better let the browser handle them.
+Let's start with the basics. Dealing with URLs is pretty common when developing websites. It's also hard to get right, better let the browser do the magic.
 
-### Query String Parsing
+### Parsing URLs
 
-There is this thing called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it's super handy when you need to extract values from a query string.
-
-```javascript
-const queryParams = new URLSearchParams("?query=1&test=Hello%20World");
-
-console.log(queryParams.get("query"));
-console.log(queryParams.get("test"));
-```
-
-A little bonus function for parsing a query string into a plain object:
-
-```javascript
-const parseQueryString = (queryString) => {
-  return Object.fromEntries(new URLSearchParams(queryString));
-};
-
-const queryParams = parseQueryString(`?query=1&test=Hello%20World`);
-
-console.log(queryParams);
-```
-
-### Manipulating query strings
-
-I've lost count of the number of times I've seen API calls like this:
-
-```javascript
-const someString = "someString";
-const someBoolean = true;
-const someNumber = 42;
-
-await fetch(
-  `https://example.com?a=${encodeURIComponent(
-    someString
-  )}&b=${someBoolean}&c=${someNumber}`
-);
-```
-
-While this works, there are many things wrong with this approach:
-
-- It is hard to read, even more so with prettier doing its best to keep the line length under control.
-- It's fragile, we're one bad keystroke away from messing up our URL.
-- We have to remember to call `encodeURIComponent` to properly encode string parameters
-
-In the past I've used the [qs](https://www.npmjs.com/package/qs) package to address all the above but there is better alternative.
-
-There is this thing called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it happens to be really well supported.
-
-```javascript
-const someString = "someString";
-const someBoolean = true;
-const someNumber = 42;
-
-const queryString = new URLSearchParams({
-  a: someString,
-  b: someBoolean,
-  c: someNumber,
-});
-
-await fetch(`https://example.com?${queryString}`);
-```
-
-Compared to the first example above, I think this looks much cleaner.
-
-This is even fully supported by Node.js since version 10 ✨
-
-### Manipulating URLs
-
-I think we've all been there before, we're in a rush, and we need to extract some data from a URL.
-So we whip out the `slice` method, start slicing pieces off and we eventually end up giving birth to a monstrosity that barely works.
+I think we've all been there before. We're in a rush, and we need to extract some data from a URL, so we whip out the good ol' `slice` method and start slicing pieces off and we end up with something that barely works.
 
 ```javascript
 // 🚫 Don't do this
-const extractQueryStringFromUrl = (url) => {
+
+const getQueryStringFromUrl = (url) => {
   return url.slice(url.indexOf("?"));
 };
 
 // Works
-console.log(extractQueryStringFromUrl("http://localhost?test=1"));
+console.log(getQueryStringFromUrl("https://example.com/?test=1"));
 
 // Fails
-console.log(extractQueryStringFromUrl("http://localhost?test=1#hash"));
-console.log(extractQueryStringFromUrl("http://localhost"));
+console.log(getQueryStringFromUrl("https://example.com/?test=1#hash"));
+console.log(getQueryStringFromUrl("https://example.com/"));
 ```
 
 **Parsing URLs is hard**, and doing it by hand is rarely a good idea.
 
-Luckily, browsers can do that for us, and it's a single line of code:
+Luckily for us, browsers ship with the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) API which means the above example can be done with a single line of code:
+
+```javascript
+console.log(new URL("https://example.com/?test=1").search);
+console.log(new URL("https://example.com/?test=1#hash").search);
+console.log(new URL("https://example.com/").search);
+```
+
+The `URL` constructor can also be used to extract any other part of a URL.
 
 ```javascript
 const url = new URL("https://example.com:3000/path?test=1#hash");
@@ -141,103 +66,161 @@ console.log(url.hash);
 // And many others...
 ```
 
-Here's a little bonus code snippet if you ever need to convert a URL into a plain object:
-
-```javascript
-const parseUrl = (url) => {
-  const {
-    origin,
-    protocol,
-    username,
-    password,
-    host,
-    hostname,
-    port,
-    pathname,
-    search,
-    searchParams,
-    hash,
-    href,
-  } = new URL(url);
-
-  return {
-    origin,
-    protocol,
-    username,
-    password,
-    host,
-    hostname,
-    port,
-    pathname,
-    search,
-    searchParams: Object.fromEntries(searchParams),
-    hash,
-    href,
-  };
-};
-
-const url = parseUrl(
-  "https://username:password@example.com:3000/path?query=1#hash"
-);
-
-console.log(url);
-```
+Here's a list of all the properties that are supported: https://developer.mozilla.org/en-US/docs/Web/API/URL#properties
 
 ### Absolute URLs
 
-The `URL` constructor can also be used for converting relative URLs into absolute ones, similar to `url.resolve` in Node.js.
+Another neat thing about `URL` is that it can also convert relative URLs into absolute ones, similar to `url.resolve` in Node.js.
 
 ```javascript
-const convertToAbsoluteUrl = (base, relativeUrl) => {
+const toAbsoluteUrl = (base, relativeUrl) => {
   return new URL(relativeUrl, base).toString();
 };
 
 const BASE_URL = "https://base-url/path/";
 
-console.log(convertToAbsoluteUrl(BASE_URL, "/relative-path"));
-console.log(convertToAbsoluteUrl(BASE_URL, "relative-path"));
-console.log(convertToAbsoluteUrl(BASE_URL, "../relative-path"));
+console.log(toAbsoluteUrl(BASE_URL, "/absolute-path"));
+console.log(toAbsoluteUrl(BASE_URL, "relative-path"));
+console.log(toAbsoluteUrl(BASE_URL, "../relative-path"));
+```
+
+### Query String Parsing
+
+Browsers also have the ability to parse query strings in a similar fashion to the `URL` constructor. The API is called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it's packed with everything we need to create, read, update and delete query parameters.
+
+This example shows how we can extract query parameters:
+
+```javascript
+const params = new URLSearchParams("?query=1&test=Hello%20world");
+
+console.log(params.get("query"));
+console.log(params.get("test"));
+```
+
+Here's a list of all the methods that are supported: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#methods
+
+We can also use a combination of `URLSearchParams` and [`Object.fromEntries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/fromEntries) to turn query strings into plain JavaScript objects:
+
+```javascript
+const parseQueryString = (queryString) => {
+  return Object.fromEntries(new URLSearchParams(queryString));
+};
+
+console.log(parseQueryString("?query=1&test=Hello%20World"));
+```
+
+### Query params stringification
+
+Great, we can parse query strings but what about the opposite. What if we have a bunch of values and we want to turn them into a query string?
+
+I've lost count of the number of times I've seen API calls like the one below (**disclaimer:** I'm guilty of having done this several times).
+
+```javascript
+const someString = "Hello world";
+const someBoolean = true;
+const someNumber = 42;
+
+// 🚫 Don't do this
+
+await fetch(
+  `https://example.com?a=${encodeURIComponent(
+    someString
+  )}&b=${someBoolean}&c=${someNumber}`
+);
+```
+
+While this works, there are many things that can be improved.
+
+- It is hard to read - even more so with prettier doing its best to keep the line length under control.
+- It's fragile - we're one bad keystroke away from messing up our URL.
+- We have to manually encode string parameters with `encodeURIComponent`.
+
+I've used the [qs](https://www.npmjs.com/package/qs) package in the past to address these issues but there is no need to add yet another package to our dependencies, we can once again rely on [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) to do the job for us.
+
+```javascript
+const someString = "Hello world";
+const someBoolean = true;
+const someNumber = 42;
+
+const queryString = new URLSearchParams({
+  a: someString,
+  b: someBoolean,
+  c: someNumber,
+}).toString();
+
+await fetch(`https://example.com?${queryString}`);
+```
+
+I think we can all agree that this is much more readable compared to the previous example.
+
+### Utility function
+
+You might want to abstract `URLSearchParams` with utility functions if you have to play with query strings a lot throughout a project.
+
+```javascript
+const parse = (queryString) => {
+  return Object.fromEntries(new URLSearchParams(queryString));
+};
+
+const stringify = (queryObject) => {
+  return new URLSearchParams(queryObject).toString();
+};
+
+const qs = {
+  parse,
+  stringify,
+};
+
+// Usage:
+
+console.log(qs.parse("?query=1&test=Hello%20World"));
+
+console.log(
+  qs.stringify({
+    query: "1",
+    test: "Hello World",
+  })
+);
 ```
 
 ## Strings
 
-### HTML String Encoding
+### HTML Entities Encoding
 
-- using a [textNode](http://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode)
-- using a [link to another page](/) with a piece of `inline code`
-- using a [link to an external webite](https://example.com)
+We sometimes need to sanitize untrusted strings to prevent XSS vulnerabilities. We usually do this by encoding HTML entities so that they are not interpreted as code when rendered in our document.
 
-We sometimes need to sanitize untrusted strings, these are usually strings of text that are provided by users. This technique helps prevent XSS attacks by encoding strings before rendering them into our document.
-
-If you look on the internet for how to html-encode a piece of text, you will mostly find answers that involves regexes:
+If we look on the internet for how to HTML-encode a piece of text, we mostly find answers that involve regular expressions:
 
 - [How to encode a string in JavaScript for displaying in HTML?](https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html)
 - [How to escape HTML](https://stackoverflow.com/questions/3043775/how-to-escape-html)
 
-Personally, the more I can stay away from regexes, the better. I'm not saying rexeges should be avoided at all cost but it's just that they get thrown around a lot and are often not the right tool for the job.
+Personally, the farther I stay away from regular expressions the better, especially when writing code that revolves around security. If there's one thing browsers are good at, it's HTML.
 
-If there's one thing browsers are good at, it's handling HTML.
+In this example we leverage the browser's built-in HTML parser to safely encode a piece of untrusted data.
 
 ```javascript
-const encodeHtml = (() => {
-  const textarea = document.createElement("textarea");
+const encodeHtmlEntities = (str) => {
+  const parent = document.createElement("div");
 
-  return (str) => {
-    textarea.innerHTML = "";
-    textarea.appendChild(new Text(str));
+  parent.appendChild(new Text(str));
 
-    return textarea.innerHTML;
-  };
-})();
+  return parent.innerHTML;
+};
 
-const htmlEncodedString = encodeHtml(
+const safeString = encodeHtmlEntities(
   `Hello world <img src="" onerror="alert('xss')" />`
 );
 
-console.log(htmlEncodedString);
+console.log(safeString);
 ```
 
-### Extract text from HTML string
+The special ingredient is the [`Text`](https://developer.mozilla.org/en-US/docs/Web/API/Text) constructor. You can learn more about it here: https://developer.mozilla.org/en-US/docs/Web/API/Text
+
+### Extract text from HTML
+
+Data can be messy sometimes. We might be pulling data from an old API built by someone that thought it was a good idea to store HTML in their database.
+
+The [`DOMParser`](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString) API can help us in such scenario:
 
 ```javascript
 const stripHtml = (html) => {
@@ -249,14 +232,15 @@ const stripHtml = (html) => {
   return documentElement.textContent;
 };
 
-const text = stripHtml(`Hello world <img src="" onerror="alert('xss')" />`);
-
-console.log(text);
+console.log(stripHtml(`<p>This is some text</p>`));
+console.log(stripHtml(`<img src="" onerror="alert('xss')" />`));
 ```
 
-### Removing Accents in a String
+I sincerely hope you never have to but you can also use the `DOMParser` API to parse XML documents: https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString
 
-Gone are the days where we had to use lodash's [`deburr`](https://lodash.com/docs/4.17.15#deburr) function to remove accents from a string.
+### Removing Accents
+
+Gone are the days when we had to use lodash's [`deburr`](https://lodash.com/docs/4.17.15#deburr) function to remove diacritics from a string.
 
 ```javascript
 const removeAccents = (str) => {
@@ -268,50 +252,61 @@ const output = removeAccents("Hétérogénéité");
 console.log(output);
 ```
 
-## Email Address Validation
+## Client-side Validations
 
-This technique leverages the build-in browser validation.
+Validating user inputs can be painful, but it doesn't have to.
 
-Constraint Validation API: https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation
+### Validating Email Addresses
+
+There is a lot of disagreement on how to validate email addresses. I prefer to look from the sidelines and let the browser do the validation for me.
+
+As far as I know, there is no built-in function we can call to get a clear yes or no whether a given address is valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of creativity to achieve just that:
 
 ```javascript
-const validateEmail = (() => {
+const validateEmail = (email) => {
   const input = document.createElement("input");
 
   input.type = "email";
   input.required = true;
+  input.value = email;
 
-  return (email) => {
-    input.value = email;
+  return input.checkValidity();
+};
 
-    return input.checkValidity();
-  };
-})();
-
-console.log(validateEmail(`test@example.com`));
-console.log(validateEmail(`test@localhost`));
-console.log(validateEmail(`not-an-email`));
+console.log(validateEmail("test@example.com"));
+console.log(validateEmail("test@localhost"));
+console.log(validateEmail("not-an-email"));
 ```
 
-This technique won't work server-side as it relies on the DOM API but this doesn't mean that you shouldn't validate email addresses on the backend too.
+**Note:** this code won't work server-side as it relies on the DOM but this doesn't mean that we shouldn't validate email addresses on the backend too.
 
-## Dates
+### URL Validation
 
-If there's one thing a developer shouldn't have to deal with, it's dates, more specifically: timezones.
+The [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) constructor turn out to be useful once again. Here we rely on the fact that it throws an exception if the given URL is invalid.
 
-## Lazy Loading Images
+```javascript
+const validateUrl = (url) => {
+  try {
+    return ["http:", "https:"].includes(new URL(url).protocol);
+  } catch {
+    return false;
+  }
+};
 
-This one's pretty new so it's not fully supported by every browser yet. As of this writing, Safari is still lagging behind. Even though not every browser supports it, it can still be a good progressive enhancement.
-data-src, the disadvantage of such approach is that…
-
-```html
-<img src="..." width="100" height="100" alt="..." loading="lazy" />
+console.log(validateUrl(`https://example.com/path/`));
+console.log(validateUrl(`wss://example.com/path/`));
+console.log(validateUrl(`javascript:alert("XSS")`));
+console.log(validateUrl(`not-a-url`));
 ```
 
-## Other techniques
+## Wrapping up
+
+As you can see, there's a bit of a trade-off. It's not as simple as importing a package, we still have to write code to leverage these browser features, but the advantage is that we are now relying on code that has been battle-tested extensively and more importantly, we haven't added a single package to our JavaScript bundle.
 
 This is a **non-exhaustive** list.
 
+- `Intl.DateTimeFormat`
+- `Intl.NumberFormat`
 - scroll snapping
 - encryption
 - smooth scrolling
