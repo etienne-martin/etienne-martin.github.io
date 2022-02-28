@@ -260,7 +260,7 @@ Client-side validation can be a pain. There is a lot of disagreement about how u
 
 ### Validating Email Addresses
 
-As far as I know, there is no built-in function we can call to get a clear [yes or no](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) whether an email is syntactically valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of creativity to achieve just that:
+As far as I know, there is no built-in function we can call to get a clear [yes or no](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) whether an email is syntactically valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of DOM wizardry to achieve just that:
 
 ```javascript
 const validateEmail = (email) => {
