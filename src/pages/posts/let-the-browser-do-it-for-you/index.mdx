@@ -10,9 +10,9 @@ export const metadata = {
 Browsers are an incredible feat of engineering. According to wikipedia, the Chromium codebase contains about [35 million lines of source code](<https://en.wikipedia.org/wiki/Chromium_(web_browser)#:~:text=35%20million%20source%20lines%20of%20code.>).
 It's really impressive to me that they work at all.
 
-Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may seem obvious nowadays but it was not always the case. There are many things we take for granted that were just hopes and dreams not so long ago.
+Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may seem obvious nowadays, but it was not always the case. There are many things we take for granted that were just hopes and dreams not so long ago.
 
-I've realised that once I have found a way of doing something, I tend to stick with it and accept it as the status quo. I often find myself reusing techniques from my old bag of tricks without checking to see if anything changed in the browser landscape.
+I've realised that once I found a way of doing something, I tend to stick with it and accept it as the status quo. I often find myself reusing techniques from my old bag of tricks without checking to see if anything changed in the browser landscape.
 
 This post is mostly a reminder to myself that I don't always need to reinvent the wheel and that I can, in most cases, rely on the browser to do the heavy lifting for me.
 
@@ -24,7 +24,7 @@ _I need to mention that it's not always possible to use some of the tricks highl
 
 ## URLs
 
-Let's start with the basics. Dealing with URLs is pretty common when developing web applications. It's also quite hard to get right, better let the browser do the magic.
+Let's start with the basics. Dealing with URLs is pretty common when developing web applications. It's also quite hard to get right. Better let the browser do the magic.
 
 ### Parsing URLs
 
@@ -43,7 +43,7 @@ console.log(getQueryString("https://example.com/?test=1"));
 We start testing our code and realize we forgot to handle the case where the query string is missing completely.
 
 Undeterred, we go back to our function and add a bit of code to handle that case. We do a little more testing and we're confident we nailed it this time.
-But a couple of days later our feature starts to break in production because someone somewhere decided to put [a fragment](https://en.wikipedia.org/wiki/URI_fragment) at the end of their url.
+But a couple of days later, our feature starts to break in production because someone somewhere decided to put [a fragment](https://en.wikipedia.org/wiki/URI_fragment) at the end of their URL.
 
 **Parsing URLs is hard**, and doing it by hand is rarely a good idea.
 
@@ -64,7 +64,7 @@ Here's a list of all the properties that are supported: https://developer.mozill
 
 ### Absolute URLs
 
-Another great thing about `URL` is that it can convert relative URLs into absolute URLs, similar to [`url.resolve`](https://nodejs.org/api/url.html#urlresolvefrom-to) in Node.js:
+Another great thing about the `URL` constructor is that it can convert relative URLs into absolute URLs, similar to [`url.resolve`](https://nodejs.org/api/url.html#urlresolvefrom-to) in Node.js:
 
 ```javascript
 const toAbsoluteUrl = (base, relativeUrl) => {
@@ -129,13 +129,13 @@ await fetchProducts({
 
 While this works, there are many things that can be improved.
 
-- It is hard to read - even more so with prettier doing its best to keep the line length under control.
-- It's fragile - we're one bad keystroke away from messing up our URL.
+- It is hard to read — even more so with prettier doing its best to keep the line length under control.
+- It's fragile — we're one bad keystroke away from messing up our URL.
 - We have to manually encode string parameters with `encodeURIComponent`.
 
-I've used the [qs](https://www.npmjs.com/package/qs) package in the past to address these issues but there is no need to increase the size of our JavaScript bundle with yet another package, we can once again rely on [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) to do the job for us.
+I've used the [qs](https://www.npmjs.com/package/qs) package in the past to address these issues, but there is no need to increase the size of our JavaScript bundle with yet another package. We can once again rely on [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) to do the job for us.
 
-I think we can all agree that this is much more readable (with the added bonus that the url encoding is taken care of):
+I think we can all agree that this is much more readable (with the added bonus that the URL encoding is taken care of):
 
 ```javascript
 const fetchProducts = ({ brand, inStock, limit }) => {
@@ -195,7 +195,7 @@ Here's the full list of supported methods: https://developer.mozilla.org/en-US/d
 ### Removing Accents
 
 Removing diacritics from a string is definitely not something I want to do by hand. I've previously relied on lodash's
-[`deburr`](https://lodash.com/docs/4.17.15#deburr) function to do the job but I recently found out that it can be done with this one-liner:
+[`deburr`](https://lodash.com/docs/4.17.15#deburr) function to do the job, but I recently found out that it can be done with this one-liner:
 
 ```javascript
 const removeAccents = (str) => {
@@ -214,9 +214,9 @@ If we look on the internet for how to HTML-encode a piece of text, we mostly fin
 - [How to encode a string in JavaScript for displaying in HTML?](https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html)
 - [How to escape HTML](https://stackoverflow.com/questions/3043775/how-to-escape-html)
 
-Personally, the farther I stay away from regular expressions the better, especially when writing code that revolves around security. If there's one thing browsers are good at, it's HTML.
+Personally, the farther I stay away from regular expressions the better. Especially when writing code that revolves around security. If there's one thing browsers are good at, it's HTML.
 
-In this example we leverage the browser's built-in HTML parser to safely encode a piece of untrusted data.
+In this example, we leverage the browser's built-in HTML parser to safely encode a piece of untrusted data.
 
 ```javascript
 const encodeHtmlEntities = (str) => {
@@ -236,7 +236,7 @@ The special ingredient here is the [`Text`](https://developer.mozilla.org/en-US/
 
 Data can be messy sometimes. We might be pulling data from an old API built by someone who thought it was a good idea to store HTML in their database.
 
-The [`DOMParser`](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString) API can help us in such scenario. It provides a way to leverage the browser's built-in DOM parser without interfering with the main document.
+The [`DOMParser`](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString) API can help us in such a scenario. It provides a way to leverage the browser's built-in DOM parser without interfering with the main document.
 
 ```javascript
 const stripHtml = (html) => {
@@ -252,7 +252,7 @@ console.log(stripHtml(`<p>This is some text</p>`));
 console.log(stripHtml(`<img src="" onerror="alert('xss')" />`));
 ```
 
-I sincerely hope you never have to but you can also use the `DOMParser` API to parse XML documents: https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString
+I sincerely hope you never have to, but you can also use the `DOMParser` API to parse XML documents: https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString
 
 ## Client-side Validations
 
@@ -260,7 +260,7 @@ Client-side validation can be a pain. There is a lot of disagreement about how u
 
 ### Validating Email Addresses
 
-As far as I know, there is no built-in function we can call to get a clear [yes or no](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) whether an email is syntactically valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of DOM wizardry to achieve just that:
+As far as I know, there is no built-in function we can call to get a clear [yes or no](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) whether an email is syntactically valid, but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of DOM wizardry to achieve just that:
 
 ```javascript
 const validateEmail = (email) => {
@@ -282,7 +282,7 @@ console.log(validateEmail("not-an-email"));
 
 ### URL Validation
 
-The [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) constructor turn out to be useful once again. Here we rely on the fact that it throws an exception if the given URL is invalid in addition to making sure the protocol matches a set of expected values:
+The [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) constructor turns out to be useful once again. Here we rely on the fact that it throws an exception if the given URL is invalid in addition to making sure the protocol matches a set of expected values:
 
 ```javascript
 const validateUrl = (url) => {
@@ -303,7 +303,7 @@ console.log(validateUrl(`not-a-url`));
 
 This is a non-exhaustive list but you get the idea.
 
-As you can see, there's a bit of a trade-off. It's not as convenient as installing a package and importing it into our project. We still have to write a bit of code to leverage these browser features but the advantage is that we are now relying on code that has been battle-tested and more importantly, we haven't increased the size of our JavaScript bundle.
+As you can see, there's a bit of a trade-off. It's not as convenient as installing a package and importing it into our project. We still have to write a bit of code to leverage these browser features, but the advantage is that we are now relying on code that has been battle-tested and more importantly, we haven't increased the size of our JavaScript bundle.
 
 As always, make sure these features are supported by the browsers you are targeting.
 
