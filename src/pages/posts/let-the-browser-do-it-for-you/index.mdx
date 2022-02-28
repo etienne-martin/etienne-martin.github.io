@@ -1,7 +1,8 @@
 export const metadata = {
   date: "2022-02-18T19:26:54.937Z",
   title: "Let the Browser Do It for You",
-  description: "A dummy description",
+  description:
+    "A reminder to myself that I don't always need to re-invent the wheel.",
   image: require("./browser.png"),
   imageAlt: "A little browser lifting weights",
 };
@@ -17,7 +18,7 @@ This post is mostly a reminder to myself that I don't always need to re-invent t
 
 ---
 
-_I need to mention that it's not always possible to use some of the tricks highlighted in this article if you are building an [isomorphic application](https://en.wikipedia.org/wiki/Isomorphic_JavaScript). Some techniques rely on browser features that are not available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749)._
+_I need to mention that it's not always possible to use some of the tricks highlighted in this article if you are building an [isomorphic application](https://en.wikipedia.org/wiki/Isomorphic_JavaScript)._ Some techniques rely on browser features that are not available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749).
 
 ---
 
@@ -102,7 +103,7 @@ const parseQueryString = (queryString) => {
 console.log(parseQueryString("?query=1&test=Hello%20World"));
 ```
 
-### Query params stringification
+### Query Params Stringification
 
 Great, we can parse query strings but what about the opposite. What if we have a bunch of values and we want to turn them into a query string?
 
@@ -154,7 +155,7 @@ await fetchProducts({
 });
 ```
 
-### Utility function
+### Utility Function
 
 If you're feeling nostalgic, you might want to create an abstraction around `URLSearchParams` that mimics the API of the [qs](https://www.npmjs.com/package/qs) module:
 
@@ -231,7 +232,7 @@ console.log(encodeHtmlEntities(`<img src="" onerror="alert('xss')" />`));
 
 The special ingredient here is the [`Text`](https://developer.mozilla.org/en-US/docs/Web/API/Text) constructor. Browsers will properly escape any string you throw at it. You can learn more about it here: https://developer.mozilla.org/en-US/docs/Web/API/Text
 
-### Extract text from HTML
+### Extract Text from Html
 
 Data can be messy sometimes. We might be pulling data from an old API built by someone who thought it was a good idea to store HTML in their database.
 
@@ -298,7 +299,7 @@ console.log(validateUrl(`javascript:alert("XSS")`));
 console.log(validateUrl(`not-a-url`));
 ```
 
-## Wrapping up
+## Wrapping Up
 
 This is a non-exhaustive list but you get the idea.
 
