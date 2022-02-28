@@ -1,0 +1,130 @@
+export const metadata = {
+  date: "2021-02-20T19:26:54.937Z",
+  title: "Markdown Cheat Sheet",
+  description: "A dummy description",
+  image: require("./browser.png"),
+  imageAlt: "A little browser lifting weights",
+};
+
+## Headings
+
+```markdown
+# Heading level 1
+
+## Heading level 2
+
+### Heading level 3
+
+#### Heading level 4
+
+##### Heading level 5
+
+###### Heading level 6
+```
+
+# Heading level 1
+
+## Heading level 2
+
+### Heading level 3
+
+#### Heading level 4
+
+##### Heading level 5
+
+###### Heading level 6
+
+## Text emphasis
+
+```markdown
+Emphasis, aka italics, with _underscores_.
+```
+
+Emphasis, aka italics, with _underscores_.
+
+```markdown
+Strong emphasis, aka bold, with **asterisks**.
+```
+
+Strong emphasis, aka bold, with **asterisks**.
+
+```markdown
+Combined emphasis with **asterisks and _underscores_**.
+```
+
+Combined emphasis with **asterisks and _underscores_**.
+
+```markdown
+Strikethrough uses two tildes. ~~Scratch this~~.
+```
+
+Strikethrough uses two tildes. ~~Scratch this~~.
+
+## Divider
+
+```markdown
+---
+```
+
+---
+
+## Lists
+
+```markdown
+1. First ordered list item
+2. Another item
+   - Unordered sub-list
+   - Unordered sub-list
+3. Actual numbers don't matter, just that it's a number
+   1. Ordered sub-list
+   1. Ordered sub-list
+4. And another item.
+```
+
+1. First ordered list item
+2. Another item
+   - Unordered sub-list
+   - Unordered sub-list
+3. Actual numbers don't matter, just that it's a number
+   1. Ordered sub-list
+   1. Ordered sub-list
+4. And another item.
+
+## Links
+
+```markdown
+I'm an [inline link](https://www.google.com)
+
+I'm a [relative link](../blob/master/LICENSE)
+```
+
+I'm an [inline-style link](https://www.google.com)
+
+I'm a [relative link](../blob/master/LICENSE)
+
+## Code block
+
+```
+const test = "123";
+```
+
+## Code block with syntax highlighting
+
+```typescript
+const test = "123";
+```
+
+## Code highlights
+
+```typescript highlight=3
+const test = "123";
+
+console.log(test);
+```
+
+## Code diff
+
+```diff
+- const test = "123";
++ const test = "1234";
+```
