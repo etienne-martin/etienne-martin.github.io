@@ -74,7 +74,7 @@ export const PageMetadata: FC<PageMetadataProps> = (props) => {
       <meta property="twitter:title" content={title} />
       <meta property="twitter:description" content={description} />
       <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:image:src" content={absoluteImageUrl} />
+      <meta property="twitter:image" content={absoluteImageUrl} />
       <meta property="twitter:image:alt" content={imageAlt} />
     </Head>
   );
