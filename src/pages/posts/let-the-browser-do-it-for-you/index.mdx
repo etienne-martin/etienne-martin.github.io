@@ -42,19 +42,11 @@ console.log(getQueryString("https://example.com/?test=1"));
 We start testing our code and realize we forgot to handle the case where the query string is missing completely.
 
 Undeterred, we go back to our function and add a bit of code to handle that case. We do a little more testing and we're confident we nailed it this time.
-But a couple of days later our feature starts to break in production because someone somewhere decided to put [a fragment](https://en.wikipedia.org/wiki/URI_fragment) at the end of the url.
+But a couple of days later our feature starts to break in production because someone somewhere decided to put [a fragment](https://en.wikipedia.org/wiki/URI_fragment) at the end of their url.
 
 **Parsing URLs is hard**, and doing it by hand is rarely a good idea.
 
-Luckily for us, browsers ship with the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) API which means we can reliably parse any URL with a single line of code:
-
-```javascript
-console.log(new URL("https://example.com/?test=1").search);
-console.log(new URL("https://example.com/?test=1#hash").search);
-console.log(new URL("https://example.com/").search);
-```
-
-It can also be used to extract any other part of a URL:
+Luckily for us, browsers ship with the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) API which allows us to reliably parse any URL with a single line of code:
 
 ```javascript
 const url = new URL("https://example.com:3000/path?test=1#hash");
