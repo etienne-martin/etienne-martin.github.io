@@ -6,6 +6,18 @@ type Status = "idle" | "pending" | "rejected" | "fulfilled";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
+const removeImportsAndExports = (code: string) => {
+  return code
+    .split("\n")
+    .map((line) => {
+      if (line.startsWith("export ")) return "";
+      if (line.startsWith("import ")) return "";
+
+      return line;
+    })
+    .join("\n");
+};
+
 export const useCodeExecution = (code: string) => {
   const hasUnmountedRef = useRef(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -59,7 +71,7 @@ export const useCodeExecution = (code: string) => {
         "fetch",
         "Promise",
         `return (async () => {
-          ${code}
+          ${removeImportsAndExports(code)}
         })()`
       );
 

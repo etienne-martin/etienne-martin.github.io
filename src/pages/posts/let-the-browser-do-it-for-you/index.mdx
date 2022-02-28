@@ -6,30 +6,31 @@ export const metadata = {
   imageAlt: "A little browser lifting weights",
 };
 
-Browsers are an incredible feat of engineering. According to wikipedia, the Chromium codebase contains about [35 million lines of source code](<https://en.wikipedia.org/wiki/Chromium_(web_browser)#:~:text=35%20million%20source%20lines%20of%20code.>). It's honestly so mind boggling to me that they work at all.
+Browsers are an incredible feat of engineering. According to wikipedia, the Chromium codebase contains about [35 million lines of source code](<https://en.wikipedia.org/wiki/Chromium_(web_browser)#:~:text=35%20million%20source%20lines%20of%20code.>).
+It's really impressive to me that they work at all.
 
-Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may seem obvious nowadays but it was not always the case. There are a lot of things we take for granted that were just hopes and dreams not long ago.
+Using built-in browser features is not a novel idea. Choosing `border-radius` over background sprites may seem obvious nowadays but it was not always the case. There are many things we take for granted that were just hopes and dreams not so long ago.
 
-I've realised that once I have found a way of doing something, I tend to stick with it and accept it as the status quo. I'll be out there reusing techniques from my old bag of tricks without revisiting them to see if anything changed in the browser landscape.
+I've realised that once I have found a way of doing something, I tend to stick with it and accept it as the status quo. I often find myself reusing techniques from my old bag of tricks without checking to see if anything changed in the browser landscape.
 
 This post is mostly a reminder to myself that I don't always need to re-invent the wheel and that I can, in most cases, rely on the browser to do the heavy lifting for me.
 
 ---
 
-_It's not always possible to rely on some of the techniques below if you are building an isomorphic application since some of them rely on browser APIs that aren't available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749)._
+_I need to mention that it's not always possible to use some of the tricks highlighted in this article if you are building an [isomorphic application](https://en.wikipedia.org/wiki/Isomorphic_JavaScript). Some techniques rely on browser features that are not available in the Node.js runtime. But hey, things move fast, I'm looking at you [#41749](https://github.com/nodejs/node/pull/41749)._
 
 ---
 
 ## URLs
 
-Let's start with the basics. Dealing with URLs is pretty common when developing websites. It's also hard to get right, better let the browser do the magic.
+Let's start with the basics. Dealing with URLs is pretty common when developing web applications. It's also quite hard to get right, better let the browser do the magic.
 
 ### Parsing URLs
 
-I think we've all been there before. We're in a rush, and we need to extract some data from a URL, so we whip out the good ol' `slice` method and start slicing pieces off and we end up with something that barely works.
+I think we've all been there before. We need to extract some data from a URL, so we whip out the `slice` method and start slicing pieces off.
 
 ```javascript
-// 🚫 Don't do this
+// 🚫 Don't do this (keep reading)
 
 const getQueryStringFromUrl = (url) => {
   return url.slice(url.indexOf("?"));
@@ -43,9 +44,11 @@ console.log(getQueryStringFromUrl("https://example.com/?test=1#hash"));
 console.log(getQueryStringFromUrl("https://example.com/"));
 ```
 
+We start testing our code and then realize there are flaws in our implementation. At this point we can decide to go back to the drawing board but even then, who knows what else we forgot.
+
 **Parsing URLs is hard**, and doing it by hand is rarely a good idea.
 
-Luckily for us, browsers ship with the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) API which means the above example can be done with a single line of code:
+Luckily for us, browsers ship with the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) API which means we can reliably parse URLs with a single line of code:
 
 ```javascript
 console.log(new URL("https://example.com/?test=1").search);
@@ -53,7 +56,7 @@ console.log(new URL("https://example.com/?test=1#hash").search);
 console.log(new URL("https://example.com/").search);
 ```
 
-The `URL` constructor can also be used to extract any other part of a URL.
+It can also be used to extract any other part of a URL:
 
 ```javascript
 const url = new URL("https://example.com:3000/path?test=1#hash");
@@ -70,7 +73,7 @@ Here's a list of all the properties that are supported: https://developer.mozill
 
 ### Absolute URLs
 
-Another neat thing about `URL` is that it can also convert relative URLs into absolute ones, similar to `url.resolve` in Node.js.
+Another great thing about `URL` is that it can convert relative URLs into absolute URLs, similar to [`url.resolve`](https://nodejs.org/api/url.html#urlresolvefrom-to) in Node.js.
 
 ```javascript
 const toAbsoluteUrl = (base, relativeUrl) => {
@@ -86,9 +89,9 @@ console.log(toAbsoluteUrl(BASE_URL, "../relative-path"));
 
 ### Query String Parsing
 
-Browsers also have the ability to parse query strings in a similar fashion to the `URL` constructor. The API is called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it's packed with everything we need to create, read, update and delete query parameters.
+Browsers also have the ability to parse query strings in a similar fashion to the `URL` constructor. The API is called [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and it's packed with everything we could possibly need when it comes to query parameters.
 
-This example shows how we can extract query parameters:
+This example shows how we can extract parameters from a query string:
 
 ```javascript
 const params = new URLSearchParams("?query=1&test=Hello%20world");
@@ -116,17 +119,21 @@ Great, we can parse query strings but what about the opposite. What if we have a
 I've lost count of the number of times I've seen API calls like the one below (**disclaimer:** I'm guilty of having done this several times).
 
 ```javascript
-const someString = "Hello world";
-const someBoolean = true;
-const someNumber = 42;
+// 🚫 Don't do this (keep reading)
 
-// 🚫 Don't do this
+const fetchProducts = ({ brand, inStock, limit }) => {
+  return fetch(
+    `https://api.example.com/products?brand=${encodeURIComponent(
+      brand
+    )}&inStock=${inStock}&limit=${limit}`
+  );
+};
 
-await fetch(
-  `https://example.com?a=${encodeURIComponent(
-    someString
-  )}&b=${someBoolean}&c=${someNumber}`
-);
+await fetchProducts({
+  brand: "Bang & Olufsen",
+  inStock: true,
+  limit: 10,
+});
 ```
 
 While this works, there are many things that can be improved.
@@ -137,27 +144,31 @@ While this works, there are many things that can be improved.
 
 I've used the [qs](https://www.npmjs.com/package/qs) package in the past to address these issues but there is no need to add yet another package to our dependencies, we can once again rely on [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) to do the job for us.
 
+I think we can all agree that this is much more readable:
+
 ```javascript
-const someString = "Hello world";
-const someBoolean = true;
-const someNumber = 42;
+const fetchProducts = (params) => {
+  return fetch(
+    `https://api.example.com/products?${new URLSearchParams(params)}`
+  );
+};
 
-const queryString = new URLSearchParams({
-  a: someString,
-  b: someBoolean,
-  c: someNumber,
-}).toString();
-
-await fetch(`https://example.com?${queryString}`);
+await fetchProducts({
+  brand: "Bang & Olufsen",
+  inStock: true,
+  limit: 10,
+});
 ```
-
-I think we can all agree that this is much more readable compared to the previous example.
 
 ### Utility function
 
-You might want to abstract `URLSearchParams` with utility functions if you have to play with query strings a lot throughout a project.
+We might want to create an abstraction around `URLSearchParams` if we prefer a more succinct API.
 
 ```javascript
+// **************************************
+// Utility functions
+// **************************************
+
 const parse = (queryString) => {
   return Object.fromEntries(new URLSearchParams(queryString));
 };
@@ -171,7 +182,13 @@ const qs = {
   stringify,
 };
 
-// Usage:
+export default qs;
+
+// **************************************
+// Usage
+// **************************************
+
+import qs from "./qs.util";
 
 console.log(qs.parse("?query=1&test=Hello%20World"));
 
@@ -185,7 +202,34 @@ console.log(
 
 ## Strings
 
-### HTML Entities Encoding
+Doing a check with `String.indexOf(...) > -1` should be a thing of the past. Browsers have made our lives a lot easier with the addition of methods such as `includes` and `startsWith`.
+
+```javascript
+const startsWith = "Hello world".startsWith("Hello");
+const endsWith = "Hello world".endsWith("world");
+const includes = "Hello world".includes("world");
+
+console.log(startsWith, endsWith, includes);
+```
+
+Here's the full list of supported methods: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#instance_methods
+
+### Removing Accents
+
+Removing diacritics from a string is definitely not something I want to do by hand. I've previously relied on lodash's
+[`deburr`](https://lodash.com/docs/4.17.15#deburr) function to do the job but I recently found out that it can be done with this one-liner:
+
+```javascript
+const removeAccents = (str) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};
+
+const output = removeAccents("Hétérogénéité");
+
+console.log(output);
+```
+
+### HTML Encoding
 
 We sometimes need to sanitize untrusted strings to prevent XSS vulnerabilities. We usually do this by encoding HTML entities so that they are not interpreted as code when rendered in our document.
 
@@ -214,13 +258,13 @@ const safeString = encodeHtmlEntities(
 console.log(safeString);
 ```
 
-The special ingredient is the [`Text`](https://developer.mozilla.org/en-US/docs/Web/API/Text) constructor. You can learn more about it here: https://developer.mozilla.org/en-US/docs/Web/API/Text
+The special ingredient here is the [`Text`](https://developer.mozilla.org/en-US/docs/Web/API/Text) constructor. The browser will properly escape any string you throw at it. You can learn more about it here: https://developer.mozilla.org/en-US/docs/Web/API/Text
 
 ### Extract text from HTML
 
-Data can be messy sometimes. We might be pulling data from an old API built by someone that thought it was a good idea to store HTML in their database.
+Data can be messy sometimes. We might be pulling data from an old API built by someone who thought it was a good idea to store HTML in their database.
 
-The [`DOMParser`](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString) API can help us in such scenario:
+The [`DOMParser`](https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString) API can help us in such scenario. It provides a way to leverage the browser's built-in DOM parser without interfering with the main document.
 
 ```javascript
 const stripHtml = (html) => {
@@ -238,29 +282,13 @@ console.log(stripHtml(`<img src="" onerror="alert('xss')" />`));
 
 I sincerely hope you never have to but you can also use the `DOMParser` API to parse XML documents: https://developer.mozilla.org/en-US/docs/Web/API/DOMParser/parseFromString
 
-### Removing Accents
-
-Gone are the days when we had to use lodash's [`deburr`](https://lodash.com/docs/4.17.15#deburr) function to remove diacritics from a string.
-
-```javascript
-const removeAccents = (str) => {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-};
-
-const output = removeAccents("Hétérogénéité");
-
-console.log(output);
-```
-
 ## Client-side Validations
 
-Validating user inputs can be painful, but it doesn't have to.
+Client-side validation can be a pain. There is a lot of disagreement about how user inputs should be validated. Most of the debate is over which regular expression is best for performing a given task. I prefer to look from the sidelines and let the browser do the validation for me when possible.
 
 ### Validating Email Addresses
 
-There is a lot of disagreement on how to validate email addresses. I prefer to look from the sidelines and let the browser do the validation for me.
-
-As far as I know, there is no built-in function we can call to get a clear yes or no whether a given address is valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of creativity to achieve just that:
+As far as I know, there is no built-in function we can call to get a clear [yes or no](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) whether a given address is valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of creativity to achieve just that:
 
 ```javascript
 const validateEmail = (email) => {
@@ -282,7 +310,7 @@ console.log(validateEmail("not-an-email"));
 
 ### URL Validation
 
-The [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) constructor turn out to be useful once again. Here we rely on the fact that it throws an exception if the given URL is invalid.
+The [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) constructor turn out to be useful once again. Here we rely on the fact that it throws an exception if the given URL is invalid in addition to making sure the protocol matches a set of expected values:
 
 ```javascript
 const validateUrl = (url) => {
@@ -301,12 +329,10 @@ console.log(validateUrl(`not-a-url`));
 
 ## Wrapping up
 
-As you can see, there's a bit of a trade-off. It's not as simple as importing a package, we still have to write code to leverage these browser features, but the advantage is that we are now relying on code that has been battle-tested extensively and more importantly, we haven't added a single package to our JavaScript bundle.
+As you can see, there's a bit of a trade-off. It's not as simple as importing a package and calling it a day. We still have to write a slight amount of code to leverage these browser features but the advantage is that we are now relying on code that has been battle-tested extensively and more importantly, we haven't increased the size of our JavaScript bundle.
 
-This is a **non-exhaustive** list.
+This list is non-exhaustive but I think we get the idea.
 
-- `Intl.DateTimeFormat`
-- `Intl.NumberFormat`
-- scroll snapping
-- encryption
-- smooth scrolling
+As always, make sure these features are supported by the browsers you are targeting.
+
+**Stay safe.**
