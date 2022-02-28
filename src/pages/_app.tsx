@@ -1,17 +1,20 @@
-import App from "next/app";
 import React from "react";
-import { ThemeProvider } from "styled-components";
-import { theme, GlobalStyle } from "../styles/theme";
+import App from "next/app";
+
+import "../modules/Theme/Theme.style";
+import { Layout } from "../modules/Layout";
+import { Providers } from "../modules/Providers";
 
 export default class MyApp extends App {
   render() {
     const { Component, pageProps } = this.props;
 
     return (
-      <ThemeProvider theme={theme}>
-        <GlobalStyle />
-        <Component {...pageProps} />
-      </ThemeProvider>
+      <Providers>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </Providers>
     );
   }
 }
