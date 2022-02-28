@@ -27,28 +27,26 @@ Let's start with the basics. Dealing with URLs is pretty common when developing 
 
 ### Parsing URLs
 
-I think we've all been there before. We need to extract some data from a URL, so we whip out the `slice` method and start slicing pieces off.
+I think we've all been there before. We need to extract data from a URL, so we put together a little function:
 
 ```javascript
 // 🚫 Don't do this (keep reading)
 
-const getQueryStringFromUrl = (url) => {
+const getQueryString = (url) => {
   return url.slice(url.indexOf("?"));
 };
 
-// Works
-console.log(getQueryStringFromUrl("https://example.com/?test=1"));
-
-// Fails
-console.log(getQueryStringFromUrl("https://example.com/?test=1#hash"));
-console.log(getQueryStringFromUrl("https://example.com/"));
+console.log(getQueryString("https://example.com/?test=1"));
 ```
 
-We start testing our code and then realize there are flaws in our implementation. At this point we can decide to go back to the drawing board but even then, who knows what else we forgot.
+We start testing our code and realize we forgot to handle the case where the query string is missing completely.
+
+Undeterred, we go back to our function and add a bit of code to handle that case. We do a little more testing and we're confident we nailed it this time.
+But a couple of days later our feature starts to break in production because someone somewhere decided to put [a fragment](https://en.wikipedia.org/wiki/URI_fragment) at the end of the url.
 
 **Parsing URLs is hard**, and doing it by hand is rarely a good idea.
 
-Luckily for us, browsers ship with the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) API which means we can reliably parse URLs with a single line of code:
+Luckily for us, browsers ship with the [`URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL) API which means we can reliably parse any URL with a single line of code:
 
 ```javascript
 console.log(new URL("https://example.com/?test=1").search);
@@ -73,7 +71,7 @@ Here's a list of all the properties that are supported: https://developer.mozill
 
 ### Absolute URLs
 
-Another great thing about `URL` is that it can convert relative URLs into absolute URLs, similar to [`url.resolve`](https://nodejs.org/api/url.html#urlresolvefrom-to) in Node.js.
+Another great thing about `URL` is that it can convert relative URLs into absolute URLs, similar to [`url.resolve`](https://nodejs.org/api/url.html#urlresolvefrom-to) in Node.js:
 
 ```javascript
 const toAbsoluteUrl = (base, relativeUrl) => {
@@ -142,14 +140,18 @@ While this works, there are many things that can be improved.
 - It's fragile - we're one bad keystroke away from messing up our URL.
 - We have to manually encode string parameters with `encodeURIComponent`.
 
-I've used the [qs](https://www.npmjs.com/package/qs) package in the past to address these issues but there is no need to add yet another package to our dependencies, we can once again rely on [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) to do the job for us.
+I've used the [qs](https://www.npmjs.com/package/qs) package in the past to address these issues but there is no need to increase the size of our JavaScript bundle with yet another package, we can once again rely on [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) to do the job for us.
 
 I think we can all agree that this is much more readable:
 
 ```javascript
-const fetchProducts = (params) => {
+const fetchProducts = ({ brand, inStock, limit }) => {
   return fetch(
-    `https://api.example.com/products?${new URLSearchParams(params)}`
+    `https://api.example.com/products?${new URLSearchParams({
+      brand,
+      inStock,
+      limit,
+    })}`
   );
 };
 
@@ -162,11 +164,11 @@ await fetchProducts({
 
 ### Utility function
 
-We might want to create an abstraction around `URLSearchParams` if we prefer a more succinct API.
+You might want to create an abstraction around `URLSearchParams` that mimics the [qs](https://www.npmjs.com/package/qs) module.
 
 ```javascript
 // **************************************
-// Utility functions
+// Utility
 // **************************************
 
 const parse = (queryString) => {
@@ -202,7 +204,9 @@ console.log(
 
 ## Strings
 
-Doing a check with `String.indexOf(...) > -1` should be a thing of the past. Browsers have made our lives a lot easier with the addition of methods such as `includes` and `startsWith`.
+Doing a check with `String.indexOf(...) > -1` should be a thing of the past.
+
+Browsers are making our lives easier with the addition of new `String` methods such as `includes` and `startsWith`.
 
 ```javascript
 const startsWith = "Hello world".startsWith("Hello");
@@ -224,16 +228,14 @@ const removeAccents = (str) => {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 };
 
-const output = removeAccents("Hétérogénéité");
-
-console.log(output);
+console.log(removeAccents("Hétérogénéité"));
 ```
 
 ### HTML Encoding
 
-We sometimes need to sanitize untrusted strings to prevent XSS vulnerabilities. We usually do this by encoding HTML entities so that they are not interpreted as code when rendered in our document.
+We sometimes need to sanitize untrusted strings to prevent XSS vulnerabilities. We usually do this by encoding HTML entities so that they are not interpreted as code once rendered in our document.
 
-If we look on the internet for how to HTML-encode a piece of text, we mostly find answers that involve regular expressions:
+If we look on the internet for how to HTML-encode a piece of text, we mostly find answers involving regular expressions:
 
 - [How to encode a string in JavaScript for displaying in HTML?](https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html)
 - [How to escape HTML](https://stackoverflow.com/questions/3043775/how-to-escape-html)
@@ -251,14 +253,10 @@ const encodeHtmlEntities = (str) => {
   return parent.innerHTML;
 };
 
-const safeString = encodeHtmlEntities(
-  `Hello world <img src="" onerror="alert('xss')" />`
-);
-
-console.log(safeString);
+console.log(encodeHtmlEntities(`<img src="" onerror="alert('xss')" />`));
 ```
 
-The special ingredient here is the [`Text`](https://developer.mozilla.org/en-US/docs/Web/API/Text) constructor. The browser will properly escape any string you throw at it. You can learn more about it here: https://developer.mozilla.org/en-US/docs/Web/API/Text
+The special ingredient here is the [`Text`](https://developer.mozilla.org/en-US/docs/Web/API/Text) constructor. Browsers will properly escape any string you throw at it. You can learn more about it here: https://developer.mozilla.org/en-US/docs/Web/API/Text
 
 ### Extract text from HTML
 
@@ -284,11 +282,11 @@ I sincerely hope you never have to but you can also use the `DOMParser` API to p
 
 ## Client-side Validations
 
-Client-side validation can be a pain. There is a lot of disagreement about how user inputs should be validated. Most of the debate is over which regular expression is best for performing a given task. I prefer to look from the sidelines and let the browser do the validation for me when possible.
+Client-side validation can be a pain. There is a lot of disagreement about how user inputs should be validated. Most of the debate is over which regex is best for performing a given task. I prefer to look from the sidelines and let the browser do the validation for me when possible.
 
 ### Validating Email Addresses
 
-As far as I know, there is no built-in function we can call to get a clear [yes or no](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) whether a given address is valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of creativity to achieve just that:
+As far as I know, there is no built-in function we can call to get a clear [yes or no](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType) whether an email is syntactically valid but we can use the [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) and a bit of creativity to achieve just that:
 
 ```javascript
 const validateEmail = (email) => {
@@ -329,10 +327,10 @@ console.log(validateUrl(`not-a-url`));
 
 ## Wrapping up
 
-As you can see, there's a bit of a trade-off. It's not as simple as importing a package and calling it a day. We still have to write a slight amount of code to leverage these browser features but the advantage is that we are now relying on code that has been battle-tested extensively and more importantly, we haven't increased the size of our JavaScript bundle.
+This is a non-exhaustive list but you get the idea.
 
-This list is non-exhaustive but I think we get the idea.
+As you can see, there's a bit of a trade-off. It's not as convenient as installing a package and importing it into our project. We still have to write a bit of code to leverage these browser features but the advantage is that we are now relying on code that has been battle-tested and more importantly, we haven't increased the size of our JavaScript bundle.
 
 As always, make sure these features are supported by the browsers you are targeting.
 
-**Stay safe.**
+**Stay safe ✌️**
