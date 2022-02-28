@@ -19,7 +19,6 @@ interface Dimensions {
 }
 
 export const PageDimensions: FC = () => {
-  const hasUnmountedRef = useRef(false);
   const [{ width, height }, setDimensions] = useState<Dimensions>({
     width: document.body.clientWidth,
     height: document.body.clientHeight,
@@ -27,8 +26,6 @@ export const PageDimensions: FC = () => {
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver(([{ contentRect }]) => {
-      if (hasUnmountedRef.current) return;
-
       setDimensions({
         width: contentRect.width,
         height: contentRect.height,
@@ -37,10 +34,7 @@ export const PageDimensions: FC = () => {
 
     resizeObserver.observe(document.body);
 
-    return () => {
-      hasUnmountedRef.current = true;
-      resizeObserver.disconnect();
-    };
+    return () => resizeObserver.disconnect();
   }, []);
 
   return (

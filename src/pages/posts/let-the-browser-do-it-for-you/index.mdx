@@ -134,7 +134,7 @@ While this works, there are many things that can be improved.
 
 I've used the [qs](https://www.npmjs.com/package/qs) package in the past to address these issues but there is no need to increase the size of our JavaScript bundle with yet another package, we can once again rely on [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) to do the job for us.
 
-I think we can all agree that this is much more readable:
+I think we can all agree that this is much more readable (with the added bonus that the url encoding is taken care of):
 
 ```javascript
 const fetchProducts = ({ brand, inStock, limit }) => {
@@ -156,13 +156,9 @@ await fetchProducts({
 
 ### Utility function
 
-You might want to create an abstraction around `URLSearchParams` that mimics the [qs](https://www.npmjs.com/package/qs) module.
+If you're feeling nostalgic, you might want to create an abstraction around `URLSearchParams` that mimics the API of the [qs](https://www.npmjs.com/package/qs) module:
 
 ```javascript
-// **************************************
-// Utility
-// **************************************
-
 const parse = (queryString) => {
   return Object.fromEntries(new URLSearchParams(queryString));
 };
@@ -177,21 +173,6 @@ const qs = {
 };
 
 export default qs;
-
-// **************************************
-// Usage
-// **************************************
-
-import qs from "./qs.util";
-
-console.log(qs.parse("?query=1&test=Hello%20World"));
-
-console.log(
-  qs.stringify({
-    query: "1",
-    test: "Hello World",
-  })
-);
 ```
 
 ## Strings
