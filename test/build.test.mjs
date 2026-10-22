@@ -143,6 +143,10 @@ test("preserves authored unordered and ordered list markers", () => {
 });
 
 test("styles semantic elements as raw Markdown", () => {
+  const htmlRule = styles.match(/html\s*{[^}]*}/s)?.[0];
+  const codeFontRule = styles.match(
+    /\.md-inline-code,\s*\.md-code-block,\s*\.md-code-block code\s*{[^}]*}/s,
+  )?.[0];
   const codeBlockRule = styles.match(/\.md-code-block\s*{[^}]*}/s)?.[0];
   const codeContentRule = [
     ...styles.matchAll(/\.md-code-block code\s*{[^}]*}/gs),
@@ -154,6 +158,8 @@ test("styles semantic elements as raw Markdown", () => {
     /article > :not\(\.md-code-block\)\s*{[^}]*}/s,
   )?.[0];
 
+  assert.ok(htmlRule);
+  assert.ok(codeFontRule);
   assert.ok(codeBlockRule);
   assert.ok(codeContentRule);
   assert.ok(bodyRule);
@@ -181,6 +187,9 @@ test("styles semantic elements as raw Markdown", () => {
   );
   assert.match(styles, /--page-gutter: 40px;/);
   assert.match(styles, /--content-width: 560px;/);
+  assert.match(htmlRule, /(?:^|\n)\s*-webkit-text-size-adjust:\s*100%;/);
+  assert.match(htmlRule, /(?:^|\n)\s*text-size-adjust:\s*100%;/);
+  assert.match(codeFontRule, /font:\s*inherit;/);
   assert.match(bodyRule, /padding-block: var\(--page-gutter\);/);
   assert.match(bodyRule, /padding-inline: 0;/);
   assert.match(contentRule, /var\(--content-width\)/);
