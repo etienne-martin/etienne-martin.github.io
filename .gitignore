@@ -1,8 +1,4 @@
-node_modules
-.idea
-coverage
-yarn-error.log
-dist
-
-# Auto-generated images
-public/images/*
+node_modules/
+dist/
+.DS_Store
+*.log

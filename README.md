@@ -1,6 +1,30 @@
-# Getting started
+# etienne-martin.github.io
 
-## Prerequisites
+A small static website authored in [`content.md`](./content.md).
 
-- Install the [MDX plugin by JetBrains](https://plugins.jetbrains.com/plugin/14944-mdx)
-- Enable linting of `.md` and `.mdx` files in Intellij's preferences
+## Local development
+
+```sh
+pnpm install
+pnpm dev
+```
+
+Editing `content.md`, `site.config.json`, or anything in `public/` or `src/`
+rebuilds the site. Refresh the browser to see the result. The generated site is
+written to `dist/`.
+
+## Commands
+
+```sh
+pnpm build
+pnpm test
+pnpm check
+```
+
+The HTML uses semantic elements but displays Markdown punctuation with CSS.
+There is no client-side JavaScript. Native copying treats the page as rendered
+HTML: plain-text destinations receive readable text, while rich-text
+destinations preserve links on their labels.
+
+The production URL is `https://etiennemartin.ca/`. The build emits one SVG
+favicon; there is intentionally no web app manifest, icon set, or social image.

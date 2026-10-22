@@ -1,0 +1,304 @@
+:root {
+  color-scheme: dark;
+  --background: #151516;
+  --foreground: #e9e9eb;
+  --muted: #8d8d93;
+  --selection: #f3ef6d;
+  --selection-foreground: #151516;
+  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco,
+    Consolas, "Liberation Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  padding: 40px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+main {
+  max-width: 560px;
+}
+
+article > :first-child {
+  margin-top: 0;
+}
+
+article > :last-child {
+  margin-bottom: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 40px 0 20px;
+  font: inherit;
+  font-weight: 700;
+}
+
+h1::before,
+h2::before,
+h3::before,
+h4::before,
+h5::before,
+h6::before,
+ul > li::before,
+ol > li::before,
+blockquote::before,
+.md-link::before,
+.md-link::after,
+.md-image-link::before,
+.md-image-link::after,
+.md-autolink::before,
+.md-autolink::after,
+.md-em::before,
+.md-em::after,
+.md-strong::before,
+.md-strong::after,
+.md-strike::before,
+.md-strike::after,
+.md-inline-code::before,
+.md-inline-code::after,
+.md-code-block::before,
+.md-code-block::after {
+  color: var(--muted);
+  cursor: default;
+  user-select: none;
+}
+
+h1::before {
+  content: "# " / "";
+}
+
+h2::before {
+  content: "## " / "";
+}
+
+h3::before {
+  content: "### " / "";
+}
+
+h4::before {
+  content: "#### " / "";
+}
+
+h5::before {
+  content: "##### " / "";
+}
+
+h6::before {
+  content: "###### " / "";
+}
+
+p,
+ul,
+ol,
+blockquote,
+pre,
+hr {
+  margin: 0 0 20px;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  position: relative;
+  padding-left: 2ch;
+}
+
+ul > li::before {
+  position: absolute;
+  left: 0;
+  content: "- " / "";
+}
+
+ul[data-marker="+"] > li::before {
+  content: "+ " / "";
+}
+
+ul[data-marker="*"] > li::before {
+  content: "* " / "";
+}
+
+ol {
+  counter-reset: markdown-list var(--markdown-list-start, 0);
+}
+
+ol > li {
+  padding-left: 4ch;
+  counter-increment: markdown-list;
+}
+
+ol[data-delimiter="."] > li::before {
+  position: absolute;
+  left: 0;
+  content: counter(markdown-list) ". " / "";
+}
+
+ol[data-delimiter=")"] > li::before {
+  position: absolute;
+  left: 0;
+  content: counter(markdown-list) ") " / "";
+}
+
+li > ul,
+li > ol {
+  margin-bottom: 0;
+}
+
+blockquote {
+  position: relative;
+  padding-left: 2ch;
+}
+
+blockquote::before {
+  position: absolute;
+  left: 0;
+  content: "> " / "";
+}
+
+.md-em {
+  font-style: italic;
+}
+
+.md-strong {
+  font-weight: 700;
+}
+
+.md-strike {
+  text-decoration: line-through;
+}
+
+.md-em::before,
+.md-em::after,
+.md-strong::before,
+.md-strong::after,
+.md-strike::before,
+.md-strike::after,
+.md-inline-code::before,
+.md-inline-code::after {
+  content: attr(data-marker) / "";
+}
+
+.md-inline-code,
+.md-code-block,
+.md-code-block code {
+  font: inherit;
+}
+
+.md-inline-code {
+  white-space: break-spaces;
+}
+
+.md-code-block {
+  padding: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.md-code-block::before,
+.md-code-block::after {
+  display: block;
+}
+
+.md-code-block::before {
+  content: attr(data-open) / "";
+}
+
+.md-code-block::after {
+  content: attr(data-close) / "";
+}
+
+.md-indented-code {
+  padding-left: 4ch;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+.md-link::before {
+  content: "[" / "";
+}
+
+.md-link::after {
+  content: "](" attr(data-href) ")" / "";
+}
+
+.md-link[data-title]::after {
+  content: "](" attr(data-href) " \"" attr(data-title) "\")" / "";
+}
+
+.md-image-link::before {
+  content: "![" / "";
+}
+
+.md-image-link::after {
+  content: "](" attr(data-href) ")" / "";
+}
+
+.md-image-link[data-title]::after {
+  content: "](" attr(data-href) " \"" attr(data-title) "\")" / "";
+}
+
+.md-autolink::before {
+  content: "<" / "";
+}
+
+.md-autolink::after {
+  content: ">" / "";
+}
+
+.md-link,
+.md-image-link,
+.md-autolink {
+  overflow-wrap: anywhere;
+}
+
+a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+a:focus-visible {
+  outline: 1px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--muted);
+}
+
+::selection {
+  background: var(--selection);
+  color: var(--selection-foreground);
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 24px;
+  }
+}
