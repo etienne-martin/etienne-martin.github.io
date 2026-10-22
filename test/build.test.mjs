@@ -9,22 +9,45 @@ const rootDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
+const articlePath = "writing/let-the-browser-do-it-for-you";
+const sourceArticleDirectory = path.join(rootDirectory, "content", articlePath);
+const outputArticleDirectory = path.join(rootDirectory, "dist", articlePath);
 
 await build({ silent: true });
 
-const [source, html, styles, emittedSource, favicon, distFiles, devSource] =
-  await Promise.all([
-  readFile(path.join(rootDirectory, "content.md"), "utf8"),
+const [
+  source,
+  articleSource,
+  html,
+  articleHtml,
+  styles,
+  emittedSource,
+  emittedArticleSource,
+  sourceArticleImage,
+  emittedArticleImage,
+  favicon,
+  distFiles,
+  articleDistFiles,
+  devSource,
+] = await Promise.all([
+  readFile(path.join(rootDirectory, "content/index.md"), "utf8"),
+  readFile(path.join(sourceArticleDirectory, "index.md"), "utf8"),
   readFile(path.join(rootDirectory, "dist/index.html"), "utf8"),
+  readFile(path.join(outputArticleDirectory, "index.html"), "utf8"),
   readFile(path.join(rootDirectory, "dist/styles.css"), "utf8"),
   readFile(path.join(rootDirectory, "dist/index.md"), "utf8"),
+  readFile(path.join(outputArticleDirectory, "index.md"), "utf8"),
+  readFile(path.join(sourceArticleDirectory, "browser.png")),
+  readFile(path.join(outputArticleDirectory, "browser.png")),
   readFile(path.join(rootDirectory, "dist/favicon.svg"), "utf8"),
   readdir(path.join(rootDirectory, "dist")),
+  readdir(outputArticleDirectory),
   readFile(path.join(rootDirectory, "scripts/dev.mjs"), "utf8"),
-  ]);
+]);
 
-test("builds the production page from the current Markdown source", () => {
+test("builds every page from its Markdown source", () => {
   assert.ok(html.includes(renderMarkdown(source).trimEnd()));
+  assert.ok(articleHtml.includes(renderMarkdown(articleSource).trimEnd()));
 });
 
 test("renders Markdown with semantic HTML", () => {
@@ -45,6 +68,36 @@ test("renders Markdown with semantic HTML", () => {
   assert.match(fixture, /<ul data-marker="-">\s*<li>/);
 });
 
+test("highlights fenced code during the build", () => {
+  const fixture = renderMarkdown(
+    '```javascript\nconst message = "Hello world";\n```\n',
+  );
+
+  assert.match(
+    fixture,
+    /<code class="hljs language-javascript">/,
+  );
+  assert.match(fixture, /<span class="hljs-keyword">const<\/span>/);
+  assert.match(
+    fixture,
+    /<span class="hljs-string">&quot;Hello world&quot;<\/span>/,
+  );
+});
+
+test("safely renders fenced code with an unknown language", () => {
+  const fixture = renderMarkdown(
+    "```not-a-language\n<script>alert('nope')</script>\n```\n",
+  );
+
+  assert.match(fixture, /data-open="```not-a-language"/);
+  assert.match(
+    fixture,
+    /<code>&lt;script&gt;alert\('nope'\)&lt;\/script&gt;\n<\/code>/,
+  );
+  assert.doesNotMatch(fixture, /class="hljs/);
+  assert.doesNotMatch(fixture, /<script>/);
+});
+
 test("renders raw-looking external links that open in a new tab", () => {
   const fixture = renderMarkdown(
     "## Products\n\n- [Example](https://example.com/path?q=1&ref=test)\n",
@@ -61,13 +114,22 @@ test("renders raw-looking external links that open in a new tab", () => {
 });
 
 test("keeps internal links in the current tab", () => {
-  const fixture = renderMarkdown("[Notes](/notes)\n");
+  const fixture = renderMarkdown("[Notes](/notes/)\n");
 
   assert.match(
     fixture,
-    /<span class="md-link" data-href="\/notes"><a href="\/notes">Notes<\/a><\/span>/,
+    /<span class="md-link" data-href="\/notes\/"><a href="\/notes\/">Notes<\/a><\/span>/,
   );
   assert.doesNotMatch(fixture, /target="_blank"/);
+});
+
+test("renders Markdown images as semantic images", () => {
+  const fixture = renderMarkdown("![Diagram](./diagram.png)\n");
+
+  assert.match(
+    fixture,
+    /<span class="md-image" data-alt="Diagram" data-src="\.\/diagram\.png"><img src="\.\/diagram\.png" alt="Diagram"><\/span>/,
+  );
 });
 
 test("preserves authored unordered and ordered list markers", () => {
@@ -81,11 +143,30 @@ test("preserves authored unordered and ordered list markers", () => {
 });
 
 test("styles semantic elements as raw Markdown", () => {
+  const codeBlockRule = styles.match(/\.md-code-block\s*{[^}]*}/s)?.[0];
+  const codeContentRule = [
+    ...styles.matchAll(/\.md-code-block code\s*{[^}]*}/gs),
+  ]
+    .map(([rule]) => rule)
+    .find((rule) => rule.includes("width: max-content"));
+  const bodyRule = styles.match(/body\s*{[^}]*}/s)?.[0];
+  const contentRule = styles.match(
+    /article > :not\(\.md-code-block\)\s*{[^}]*}/s,
+  )?.[0];
+
+  assert.ok(codeBlockRule);
+  assert.ok(codeContentRule);
+  assert.ok(bodyRule);
+  assert.ok(contentRule);
   assert.match(styles, /h2::before\s*{\s*content: "## " \/ "";/);
   assert.match(styles, /ul > li::before\s*{[^}]*content: "- " \/ "";/s);
   assert.match(
     styles,
     /\.md-link::after\s*{\s*content: "\]\(" attr\(data-href\) "\)" \/ "";/,
+  );
+  assert.match(
+    styles,
+    /\.md-image::before\s*{[^}]*content: "!\[" attr\(data-alt\) "\]\(" attr\(data-src\) "\)" \/ "";/s,
   );
   assert.match(styles, /user-select: none;/);
   assert.match(
@@ -98,10 +179,77 @@ test("styles semantic elements as raw Markdown", () => {
     styles,
     /a\s*{[^}]*font-weight: 600;[^}]*text-decoration: none;/s,
   );
+  assert.match(styles, /--page-gutter: 40px;/);
+  assert.match(styles, /--content-width: 560px;/);
+  assert.match(bodyRule, /padding-block: var\(--page-gutter\);/);
+  assert.match(bodyRule, /padding-inline: 0;/);
+  assert.match(contentRule, /var\(--content-width\)/);
+  assert.match(contentRule, /margin-inline-start: var\(--page-gutter\);/);
+  assert.match(codeBlockRule, /width: 100%;/);
+  assert.match(codeBlockRule, /margin-inline: 0;/);
+  assert.match(codeBlockRule, /padding-block: 0;/);
+  assert.match(
+    codeBlockRule,
+    /padding-inline-start: var\(--page-gutter\);/,
+  );
+  assert.match(codeBlockRule, /padding-inline-end: 0;/);
+  assert.match(codeContentRule, /display: block;/);
+  assert.match(codeContentRule, /box-sizing: content-box;/);
+  assert.match(codeContentRule, /width: max-content;/);
+  assert.match(
+    codeContentRule,
+    /min-width: calc\(100% - var\(--page-gutter\)\);/,
+  );
+  assert.match(
+    codeContentRule,
+    /padding-inline-end: var\(--page-gutter\);/,
+  );
+  assert.match(codeContentRule, /color: var\(--syntax-default\);/);
+  assert.match(codeBlockRule, /border-radius: 0;/);
+  assert.doesNotMatch(codeBlockRule, /background(?:-color)?\s*:/);
+  assert.doesNotMatch(codeContentRule, /background(?:-color)?\s*:/);
+  assert.doesNotMatch(styles, /--code-background:/);
+  assert.match(codeBlockRule, /white-space: pre;/);
+  assert.match(codeBlockRule, /overflow-x: auto;/);
+  assert.match(codeBlockRule, /overflow-wrap: normal;/);
+  assert.doesNotMatch(codeBlockRule, /pre-wrap|anywhere/);
+  assert.match(styles, /--syntax-default: #c9d1d9;/);
+  assert.match(styles, /--syntax-keyword: #ff7b72;/);
+  assert.match(styles, /--syntax-title: #d2a8ff;/);
+  assert.match(styles, /--syntax-constant: #79c0ff;/);
+  assert.match(styles, /--syntax-string: #a5d6ff;/);
+  assert.match(styles, /--syntax-built-in: #ffa657;/);
+  assert.match(
+    styles,
+    /\.hljs-keyword,[^}]*color: var\(--syntax-keyword\);/s,
+  );
+  assert.match(
+    styles,
+    /\.hljs-title,[^}]*color: var\(--syntax-title\);/s,
+  );
+  assert.match(
+    styles,
+    /\.hljs-name,[^}]*color: var\(--syntax-tag\);/s,
+  );
+  assert.doesNotMatch(
+    styles,
+    /\.hljs\s*{[^}]*background(?:-color)?\s*:/s,
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 600px\)\s*{\s*:root\s*{\s*--page-gutter: 24px;/s,
+  );
 });
 
-test("emits the exact Markdown source as a standalone file", () => {
+test("emits exact Markdown sources and colocated assets", () => {
   assert.equal(emittedSource, source);
+  assert.equal(emittedArticleSource, articleSource);
+  assert.deepEqual(emittedArticleImage, sourceArticleImage);
+  assert.deepEqual(articleDistFiles.sort(), [
+    "browser.png",
+    "index.html",
+    "index.md",
+  ]);
 });
 
 test("ships one minimal favicon", () => {
@@ -121,14 +269,15 @@ test("ships one minimal favicon", () => {
 
 test("ships no client-side JavaScript", () => {
   assert.doesNotMatch(html, /<script\b/i);
+  assert.doesNotMatch(articleHtml, /<script\b/i);
   assert.equal(
-    distFiles.some((file) => file.endsWith(".js")),
+    [...distFiles, ...articleDistFiles].some((file) => file.endsWith(".js")),
     false,
   );
   assert.doesNotMatch(devSource, /EventSource|__reload|<script\b/i);
 });
 
-test("uses only the new metadata and content", () => {
+test("builds the homepage Writing section and internal article link", () => {
   assert.match(html, /<title>Etienne Martin<\/title>/);
   assert.match(
     html,
@@ -138,34 +287,52 @@ test("uses only the new metadata and content", () => {
     html,
     /<link rel="canonical" href="https:\/\/etiennemartin\.ca\/">/,
   );
+  assert.match(html, /<h2>Writing<\/h2>/);
   assert.match(
     html,
-    /<meta property="og:url" content="https:\/\/etiennemartin\.ca\/">/,
+    /<a href="\/writing\/let-the-browser-do-it-for-you\/">Let the Browser Do It for You<\/a>/,
   );
-  assert.doesNotMatch(html, /property="og:image"/);
-  assert.match(html, /based in Lisbon, Portugal/);
-  assert.match(
+  assert.doesNotMatch(
     html,
-    /software engineer and architect based in Lisbon, Portugal/,
+    /href="\/writing\/let-the-browser-do-it-for-you\/"[^>]*target="_blank"/,
   );
-  assert.match(
-    html,
-    /build distributed systems for large-scale video delivery/,
-  );
-  assert.match(
-    html,
-    /worked in technology since 2007, starting out with a mix of creative and technical work/,
-  );
-  assert.match(
-    html,
-    /<a href="https:\/\/sudden\.network\/" target="_blank" rel="noopener noreferrer">Sudden Technologies<\/a>/,
-  );
-  assert.match(html, /https:\/\/sudden\.network\//);
-  assert.doesNotMatch(html, /https:\/\/www\.sudden\.network\//);
-  assert.match(html, /Sudden’s GitHub/);
   assert.match(html, /<h2>Links<\/h2>/);
-  assert.doesNotMatch(html, /<h2>Elsewhere<\/h2>/);
   assert.match(html, /href="https:\/\/x\.com\/_etiennemartin"/);
-  assert.match(html, />X<\/a>/);
-  assert.doesNotMatch(html, /Thinking out Loud|let-the-browser-do-it-for-you/i);
+  assert.match(html, /Sudden’s GitHub/);
+  assert.doesNotMatch(html, /Thinking out Loud/);
+});
+
+test("builds the article at its folder-derived route", () => {
+  assert.match(
+    articleHtml,
+    /<title>Let the Browser Do It for You — Etienne Martin<\/title>/,
+  );
+  assert.match(articleHtml, /<meta property="og:type" content="article">/);
+  assert.match(
+    articleHtml,
+    /<link rel="canonical" href="https:\/\/etiennemartin\.ca\/writing\/let-the-browser-do-it-for-you\/">/,
+  );
+  assert.match(
+    articleHtml,
+    /<meta property="og:url" content="https:\/\/etiennemartin\.ca\/writing\/let-the-browser-do-it-for-you\/">/,
+  );
+  assert.match(articleHtml, /<h1>Let the Browser Do It for You<\/h1>/);
+  assert.match(articleHtml, /<img src="\.\/browser\.png" alt="A little browser lifting weights">/);
+  assert.match(articleHtml, /<h2>URLs<\/h2>/);
+  assert.match(articleHtml, /data-open="```javascript"/);
+  assert.doesNotMatch(articleSource, /export const metadata|require\(/);
+});
+
+test("keeps the article text free of em dashes", () => {
+  const emDash = /—|&mdash;|&#8212;|&#x2014;/i;
+
+  assert.doesNotMatch(articleSource, emDash);
+  assert.doesNotMatch(renderMarkdown(articleSource), emDash);
+});
+
+test("the development server watches content and serves directory routes", () => {
+  assert.match(devSource, /path\.join\(rootDirectory, "content"\)/);
+  assert.match(devSource, /fileStats\.isDirectory\(\)/);
+  assert.match(devSource, /Location: `\$\{pathname\}\//);
+  assert.match(devSource, /\["\.png", "image\/png"\]/);
 });

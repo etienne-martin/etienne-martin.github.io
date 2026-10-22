@@ -15,10 +15,21 @@ const host = process.env.HOST || "127.0.0.1";
 const watchers = [];
 
 const contentTypes = new Map([
+  [".avif", "image/avif"],
   [".css", "text/css; charset=utf-8"],
+  [".gif", "image/gif"],
   [".html", "text/html; charset=utf-8"],
+  [".jpeg", "image/jpeg"],
+  [".jpg", "image/jpeg"],
+  [".m4a", "audio/mp4"],
   [".md", "text/markdown; charset=utf-8"],
+  [".mp3", "audio/mpeg"],
+  [".ogg", "audio/ogg"],
+  [".pdf", "application/pdf"],
+  [".png", "image/png"],
   [".svg", "image/svg+xml"],
+  [".wav", "audio/wav"],
+  [".webp", "image/webp"],
 ]);
 
 let rebuildTimer;
@@ -35,7 +46,7 @@ async function rebuild() {
 
   try {
     await build({ silent: true });
-    console.log(`[${new Date().toLocaleTimeString()}] Rebuilt content.md`);
+    console.log(`[${new Date().toLocaleTimeString()}] Rebuilt content/`);
   } catch (error) {
     console.error(error);
   } finally {
@@ -55,10 +66,19 @@ function scheduleRebuild() {
 
 async function serveFile(request, response) {
   const requestUrl = new URL(request.url || "/", "http://localhost");
+  let pathname;
+
+  try {
+    pathname = decodeURIComponent(requestUrl.pathname);
+  } catch {
+    response.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end("Bad request\n");
+    return;
+  }
 
   const relativePath =
-    requestUrl.pathname === "/" ? "index.html" : requestUrl.pathname.slice(1);
-  const filePath = path.resolve(outputDirectory, relativePath);
+    pathname === "/" ? "index.html" : pathname.slice(1);
+  let filePath = path.resolve(outputDirectory, relativePath);
 
   if (
     filePath !== outputDirectory &&
@@ -69,7 +89,20 @@ async function serveFile(request, response) {
   }
 
   try {
-    const fileStats = await stat(filePath);
+    let fileStats = await stat(filePath);
+
+    if (fileStats.isDirectory()) {
+      if (!pathname.endsWith("/")) {
+        response.writeHead(308, {
+          Location: `${pathname}/${requestUrl.search}`,
+        });
+        response.end();
+        return;
+      }
+
+      filePath = path.join(filePath, "index.html");
+      fileStats = await stat(filePath);
+    }
 
     if (!fileStats.isFile()) {
       throw new Error("Not a file");
@@ -93,7 +126,7 @@ async function serveFile(request, response) {
 await build({ silent: true });
 
 for (const target of [
-  path.join(rootDirectory, "content.md"),
+  path.join(rootDirectory, "content"),
   path.join(rootDirectory, "public"),
   path.join(rootDirectory, "site.config.json"),
   path.join(rootDirectory, "src"),

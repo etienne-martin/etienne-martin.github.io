@@ -1,6 +1,6 @@
 # etienne-martin.github.io
 
-A small static website authored in [`content.md`](./content.md).
+A small static website authored in [`content/`](./content/).
 
 ## Local development
 
@@ -9,9 +9,23 @@ pnpm install
 pnpm dev
 ```
 
-Editing `content.md`, `site.config.json`, or anything in `public/` or `src/`
+Editing anything in `content/`, `site.config.json`, `public/`, or `src/`
 rebuilds the site. Refresh the browser to see the result. The generated site is
 written to `dist/`.
+
+Every `index.md` in `content/` becomes a page at the route matching its folder:
+
+```text
+content/
+  index.md                              → /
+  writing/
+    article-slug/
+      index.md                          → /writing/article-slug/
+      image.png                         → /writing/article-slug/image.png
+```
+
+Keep article-specific images, audio, and other assets beside that article’s
+`index.md`. The build copies them into the same generated route.
 
 ## Commands
 
