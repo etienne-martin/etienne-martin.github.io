@@ -298,7 +298,7 @@ test("builds the homepage Writing section and internal article link", () => {
   );
   assert.match(html, /<h2>Links<\/h2>/);
   assert.match(html, /href="https:\/\/x\.com\/_etiennemartin"/);
-  assert.match(html, /Sudden’s GitHub/);
+  assert.doesNotMatch(html, /github\.com\/sudden-network|Sudden’s GitHub/);
   assert.doesNotMatch(html, /Thinking out Loud/);
 });
 

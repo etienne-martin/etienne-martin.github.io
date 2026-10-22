@@ -13,4 +13,3 @@ I’m the co-founder and CTO of [Sudden Technologies](https://sudden.network/), 
 - [X](https://x.com/_etiennemartin)
 - [GitHub](https://github.com/etienne-martin)
 - [LinkedIn](https://www.linkedin.com/in/etiennema)
-- [Sudden’s GitHub](https://github.com/sudden-network)
