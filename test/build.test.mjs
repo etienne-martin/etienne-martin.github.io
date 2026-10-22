@@ -93,6 +93,7 @@ test("styles semantic elements as raw Markdown", () => {
     /\.md-link,[\s\S]*\.md-autolink\s*{\s*overflow-wrap: anywhere;/,
   );
   assert.match(styles, /h1,[\s\S]*font: inherit;[\s\S]*font-weight: 700;/);
+  assert.match(styles, /h1,[\s\S]*text-transform: uppercase;/);
   assert.match(
     styles,
     /a\s*{[^}]*font-weight: 600;[^}]*text-decoration: none;/s,
