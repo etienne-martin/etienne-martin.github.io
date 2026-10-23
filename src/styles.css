@@ -42,7 +42,7 @@ body {
   min-height: 100%;
   margin: 0;
   padding-block: var(--page-gutter);
-  padding-inline: 0;
+  padding-inline: var(--page-gutter);
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-mono);
@@ -52,20 +52,7 @@ body {
 
 main {
   width: 100%;
-  max-width: none;
-}
-
-article > :not(.md-code-block, .md-block-separator) {
-  width: min(
-    var(--content-width),
-    calc(100% - var(--page-gutter) - var(--page-gutter))
-  );
-  margin-inline-start: var(--page-gutter);
-  margin-inline-end: auto;
-}
-
-article > :not(.md-code-block, p, .md-block-separator) {
-  margin-block: 0;
+  max-width: var(--content-width);
 }
 
 h1,
@@ -75,19 +62,9 @@ h4,
 h5,
 h6 {
   margin: 0;
-  padding-top: 20px;
   font: inherit;
   font-weight: 700;
   text-transform: uppercase;
-}
-
-article > h1:first-child,
-article > h2:first-child,
-article > h3:first-child,
-article > h4:first-child,
-article > h5:first-child,
-article > h6:first-child {
-  padding-top: 0;
 }
 
 h1::before,
@@ -150,7 +127,7 @@ ol,
 blockquote,
 pre,
 hr {
-  margin: 0 0 20px;
+  margin: 0;
 }
 
 ul,
@@ -249,10 +226,11 @@ blockquote::before {
 }
 
 .md-code-block {
-  width: 100%;
+  width: 100vw;
   max-width: none;
   margin-block: 0;
-  margin-inline: 0;
+  margin-inline-start: calc(0px - var(--page-gutter));
+  margin-inline-end: 0;
   padding-block: 0;
   padding-inline-start: var(--page-gutter);
   padding-inline-end: 0;
@@ -407,7 +385,7 @@ blockquote::before {
   width: auto;
   max-width: 100%;
   height: auto;
-  margin-top: 20px;
+  margin: 0;
 }
 
 .md-autolink::before {
@@ -441,14 +419,10 @@ hr {
 }
 
 .site-footer {
-  width: min(
-    var(--content-width),
-    calc(100% - var(--page-gutter) - var(--page-gutter))
-  );
+  width: 100%;
+  max-width: var(--content-width);
   margin-block: 0;
-  margin-inline-start: var(--page-gutter);
-  margin-inline-end: auto;
-  padding-top: 20px;
+  margin-inline: 0;
   font: inherit;
 }
 

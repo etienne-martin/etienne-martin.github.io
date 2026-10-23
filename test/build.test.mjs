@@ -86,7 +86,7 @@ test("builds every page from its Markdown source", () => {
 test("adds an automated copyright footer to every page", () => {
   const copyrightYear = new Date().getUTCFullYear();
   const footer = new RegExp(
-    `<footer class="site-footer">\\s*<hr>\\s*<br class="md-block-separator" aria-hidden="true">\\s*<p>© ${copyrightYear} Etienne Martin<\\/p>\\s*<\\/footer>`,
+    `<footer class="site-footer">\\s*<hr>\\s*<br>\\s*<p>© ${copyrightYear} Etienne Martin<\\/p>\\s*<\\/footer>`,
   );
 
   for (const document of [html, articleHtml]) {
@@ -138,7 +138,7 @@ test("fingerprints generated assets from their contents", () => {
   assert.match(
     articleHtml,
     new RegExp(
-      `<span class="md-image" data-alt="A little browser lifting weights" data-src="\\./browser\\.png"><img src="\\./${fingerprintedArticleImageFilename.replaceAll(".", "\\.")}"`,
+      `<span class="md-image" data-alt="A little browser lifting weights" data-src="\\./browser\\.png"><br><img src="\\./${fingerprintedArticleImageFilename.replaceAll(".", "\\.")}"`,
     ),
   );
 });
@@ -159,15 +159,10 @@ test("renders Markdown with semantic HTML", () => {
     /<strong class="md-strong" data-marker="\*\*">bold<\/strong>/,
   );
   assert.match(fixture, /<ul data-marker="-">\s*<li>/);
-  assert.equal(
-    fixture.match(
-      /<br class="md-block-separator" aria-hidden="true">/g,
-    )?.length,
-    3,
-  );
+  assert.equal(fixture.match(/<br>/g)?.length, 4);
 });
 
-test("collapses authored blank lines into single top-level breaks", () => {
+test("collapses authored blank lines into one top-level break", () => {
   const fixture = renderMarkdown(
     "# Title\n\n\n\n\nFirst paragraph.\n\n\n\n\nSecond paragraph.\n## Adjacent heading\n\n\n\n\n- One\n- Two\n\n\n\n\n---\n\n\n\n\nAfter.\n",
   );
@@ -176,40 +171,51 @@ test("collapses authored blank lines into single top-level breaks", () => {
   );
 
   assert.equal(fixture, compactFixture);
-  assert.equal(renderMarkdown("   Trim me   \n"), "<p>Trim me</p>\n");
   assert.equal(
-    fixture.match(
-      /<br class="md-block-separator" aria-hidden="true">/g,
-    )?.length,
-    4,
+    renderMarkdown("   Trim me   \n"),
+    "<p>Trim me</p>\n<br>\n",
+  );
+  assert.equal(fixture.match(/(?:^|\n)<br>\n/g)?.length, 7);
+  assert.match(
+    fixture,
+    /<h1>Title<\/h1>\s*<br>\s*<p>First paragraph\.<\/p>/,
   );
   assert.match(
     fixture,
-    /<h1>Title<\/h1>\s*<br class="md-block-separator" aria-hidden="true">\s*<p>First paragraph\.<\/p>/,
+    /<p>First paragraph\.<\/p>\s*<br>\s*<p>Second paragraph\.<\/p>/,
   );
   assert.match(
     fixture,
-    /<p>First paragraph\.<\/p>\s*<p>Second paragraph\.<\/p>/,
-  );
-  assert.match(
-    fixture,
-    /<p>Second paragraph\.<\/p>\s*<h2>Adjacent heading<\/h2>/,
+    /<p>Second paragraph\.<\/p>\s*<br>\s*<h2>Adjacent heading<\/h2>/,
   );
   assert.doesNotMatch(
     fixture,
-    /<li>One<\/li>\s*<br class="md-block-separator" aria-hidden="true">\s*<li>Two<\/li>/,
+    /<li>One<\/li>\s*<br>\s*<li>Two<\/li>/,
   );
   assert.match(
     fixture,
-    /<\/ul>\s*<br class="md-block-separator" aria-hidden="true">\s*<hr>\s*<br class="md-block-separator" aria-hidden="true">\s*<p>After\.<\/p>/,
+    /<\/ul>\s*<br>\s*<hr>\s*<br>\s*<p>After\.<\/p>\s*<br>\s*$/,
   );
   assert.match(
     renderMarkdown("- Final item\n"),
-    /<\/ul>\s*<br class="md-block-separator" aria-hidden="true">\s*$/,
+    /<li>Final item<\/li>\s*<\/ul>\s*<br>\s*$/,
   );
 });
 
-test("avoids duplicate breaks after blocks ending in paragraphs", () => {
+test("keeps list items semantic without custom breaks", () => {
+  const unordered = renderMarkdown("- One\n- Two\n- Three\n");
+  const ordered = renderMarkdown("1. One\n2. Two\n3. Three\n");
+
+  assert.match(unordered, /<li>One<\/li>\s*<li>Two<\/li>\s*<li>Three<\/li>/);
+  assert.match(ordered, /<li>One<\/li>\s*<li>Two<\/li>\s*<li>Three<\/li>/);
+
+  for (const rendered of [unordered, ordered]) {
+    assert.doesNotMatch(rendered, /<li>[^<]*<br>/);
+    assert.match(rendered, /<\/li>\s+<li>/);
+  }
+});
+
+test("adds exactly one real break after every top-level block", () => {
   const blockquote = renderMarkdown("> Quoted paragraph.\n\nAfter.\n");
   const looseList = renderMarkdown(
     "- First paragraph.\n\n  Second paragraph.\n\nAfter.\n",
@@ -218,21 +224,20 @@ test("avoids duplicate breaks after blocks ending in paragraphs", () => {
 
   assert.match(
     blockquote,
-    /<\/blockquote>\s*<p>After\.<\/p>/,
+    /<\/blockquote>\s*<br>\s*<p>After\.<\/p>\s*<br>\s*$/,
   );
-  assert.doesNotMatch(
-    blockquote,
-    /<\/blockquote>\s*<br class="md-block-separator"/,
-  );
-  assert.match(looseList, /<\/ul>\s*<p>After\.<\/p>/);
-  assert.doesNotMatch(
+  assert.match(
     looseList,
-    /<\/ul>\s*<br class="md-block-separator"/,
+    /<\/ul>\s*<br>\s*<p>After\.<\/p>\s*<br>\s*$/,
   );
   assert.match(
     tightList,
-    /<\/ul>\s*<br class="md-block-separator" aria-hidden="true">\s*<p>After\.<\/p>/,
+    /<\/ul>\s*<br>\s*<p>After\.<\/p>\s*<br>\s*$/,
   );
+
+  for (const rendered of [blockquote, looseList, tightList]) {
+    assert.equal(rendered.match(/(?:^|\n)<br>\n/g)?.length, 2);
+  }
 });
 
 test("highlights fenced code during the build", () => {
@@ -295,8 +300,9 @@ test("renders Markdown images as semantic images", () => {
 
   assert.match(
     fixture,
-    /<span class="md-image" data-alt="Diagram" data-src="\.\/diagram\.png"><img src="\.\/diagram\.png" alt="Diagram"><\/span>/,
+    /<span class="md-image" data-alt="Diagram" data-src="\.\/diagram\.png"><br><img src="\.\/diagram\.png" alt="Diagram"><\/span>/,
   );
+  assert.match(fixture, /<\/span><\/p>\s*<br>\s*$/);
 });
 
 test("resolves asset URLs without changing their Markdown decoration", () => {
@@ -313,7 +319,7 @@ test("resolves asset URLs without changing their Markdown decoration", () => {
 
   assert.ok(
     fixture.includes(
-      '<span class="md-link" data-href="./diagram.pdf"><a href="./diagram.222222222222.pdf"><span class="md-image" data-alt="Diagram" data-src="./diagram.png"><img src="./diagram.111111111111.png" alt="Diagram"></span></a></span>',
+      '<span class="md-link" data-href="./diagram.pdf"><a href="./diagram.222222222222.pdf"><span class="md-image" data-alt="Diagram" data-src="./diagram.png"><br><img src="./diagram.111111111111.png" alt="Diagram"></span></a></span>',
     ),
   );
 });
@@ -344,7 +350,7 @@ test("fingerprints root-relative content asset URLs", () => {
   assert.equal(resolver(authoredUrl), resolvedUrl);
   assert.ok(
     fixture.includes(
-      `<span class="md-image" data-alt="Diagram" data-src="${authoredUrl}"><img src="${resolvedUrl}" alt="Diagram"></span>`,
+      `<span class="md-image" data-alt="Diagram" data-src="${authoredUrl}"><br><img src="${resolvedUrl}" alt="Diagram"></span>`,
     ),
   );
 });
@@ -410,22 +416,30 @@ test("styles semantic elements as raw Markdown", () => {
     .map(([rule]) => rule)
     .find((rule) => rule.includes("width: max-content"));
   const bodyRule = styles.match(/body\s*{[^}]*}/s)?.[0];
-  const contentRule = styles.match(
-    /article > :not\(\.md-code-block, \.md-block-separator\)\s*{[^}]*}/s,
-  )?.[0];
-  const topLevelSpacingRule = styles.match(
-    /article > :not\(\.md-code-block, p, \.md-block-separator\)\s*{[^}]*}/s,
-  )?.[0];
+  const mainRule = styles.match(/^main\s*{[^}]*}/ms)?.[0];
   const headingRule = styles.match(/h1,[\s\S]*?h6\s*{[^}]*}/s)?.[0];
+  const blockSpacingRule = styles.match(
+    /p,\s*ul,\s*ol,\s*blockquote,\s*pre,\s*hr\s*{[^}]*}/s,
+  )?.[0];
+  const listItemRule = styles.match(/^li\s*{[^}]*}/ms)?.[0];
+  const imageRule = styles.match(/\.md-image img\s*{[^}]*}/s)?.[0];
+  const footerRule = styles.match(
+    /^\.site-footer\s*{[^}]*}/ms,
+  )?.[0];
+  const footerParagraphRule = styles.match(/\.site-footer p\s*{[^}]*}/s)?.[0];
 
   assert.ok(htmlRule);
   assert.ok(codeFontRule);
   assert.ok(codeBlockRule);
   assert.ok(codeContentRule);
   assert.ok(bodyRule);
-  assert.ok(contentRule);
-  assert.ok(topLevelSpacingRule);
+  assert.ok(mainRule);
   assert.ok(headingRule);
+  assert.ok(blockSpacingRule);
+  assert.ok(listItemRule);
+  assert.ok(imageRule);
+  assert.ok(footerRule);
+  assert.ok(footerParagraphRule);
   assert.match(styles, /h2::before\s*{\s*content: "## " \/ "";/);
   assert.match(styles, /ul > li::before\s*{[^}]*content: "- " \/ "";/s);
   assert.match(
@@ -453,15 +467,23 @@ test("styles semantic elements as raw Markdown", () => {
   assert.match(htmlRule, /(?:^|\n)\s*text-size-adjust:\s*100%;/);
   assert.match(codeFontRule, /font:\s*inherit;/);
   assert.match(bodyRule, /padding-block: var\(--page-gutter\);/);
-  assert.match(bodyRule, /padding-inline: 0;/);
-  assert.match(contentRule, /var\(--content-width\)/);
-  assert.match(contentRule, /margin-inline-start: var\(--page-gutter\);/);
-  assert.match(topLevelSpacingRule, /margin-block: 0;/);
+  assert.match(bodyRule, /padding-inline: var\(--page-gutter\);/);
+  assert.match(mainRule, /width: 100%;/);
+  assert.match(mainRule, /max-width: var\(--content-width\);/);
+  assert.doesNotMatch(styles, /article\s*>/);
   assert.match(headingRule, /margin: 0;/);
-  assert.match(headingRule, /padding-top: 20px;/);
-  assert.match(codeBlockRule, /width: 100%;/);
+  assert.doesNotMatch(headingRule, /padding-(?:top|block)/);
+  assert.match(blockSpacingRule, /margin: 0;/);
+  assert.doesNotMatch(listItemRule, /display:/);
+  assert.doesNotMatch(listItemRule, /vertical-align:/);
+  assert.match(imageRule, /margin: 0;/);
+  assert.match(codeBlockRule, /width: 100vw;/);
   assert.match(codeBlockRule, /margin-block: 0;/);
-  assert.match(codeBlockRule, /margin-inline: 0;/);
+  assert.match(
+    codeBlockRule,
+    /margin-inline-start: calc\(0px - var\(--page-gutter\)\);/,
+  );
+  assert.match(codeBlockRule, /margin-inline-end: 0;/);
   assert.match(codeBlockRule, /padding-block: 0;/);
   assert.match(
     codeBlockRule,
@@ -514,11 +536,42 @@ test("styles semantic elements as raw Markdown", () => {
     styles,
     /@media \(max-width: 600px\)\s*{\s*:root\s*{\s*--page-gutter: 24px;/s,
   );
-  assert.match(
-    styles,
-    /\.site-footer\s*{[^}]*margin-block: 0;[^}]*padding-top: 20px;/s,
+  assert.doesNotMatch(
+    footerRule,
+    /padding-(?:block|top|bottom)/,
   );
+  assert.match(footerRule, /margin-block: 0;/);
+  assert.match(footerParagraphRule, /margin: 0;/);
   assert.match(styles, /\.site-footer hr\s*{[^}]*margin: 0;/s);
+  assert.doesNotMatch(styles, /margin-(?:top|bottom):\s*20px;/);
+  assert.doesNotMatch(styles, /padding-top:\s*20px;/);
+});
+
+test("owns the page gutter at the layout level", () => {
+  const fixture = renderMarkdown(
+    "| Column | Value |\n| --- | --- |\n| Table | Cell |\n\n> Quote\n",
+  );
+  const pageGutterSelectors = [
+    ...styles.matchAll(
+      /([^{}]+)\{([^{}]*var\(--page-gutter\)[^{}]*)\}/g,
+    ),
+  ].map(([, selector]) => selector.trim());
+
+  assert.match(fixture, /<table>/);
+  assert.match(fixture, /<blockquote>/);
+  assert.deepEqual(pageGutterSelectors, [
+    "body",
+    ".md-code-block",
+    ".md-code-block code",
+  ]);
+  assert.equal(styles.match(/width:\s*100vw;/g)?.length, 1);
+  assert.equal(
+    styles.match(
+      /margin-inline-start:\s*calc\(0px - var\(--page-gutter\)\);/g,
+    )?.length,
+    1,
+  );
+  assert.doesNotMatch(styles, /article\s*>/);
 });
 
 test("emits exact Markdown sources and colocated assets", () => {

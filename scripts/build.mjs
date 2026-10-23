@@ -26,6 +26,7 @@ const markdown = new MarkdownIt({
 markdown.core.ruler.after("block", "blank_line_separators", (state) => {
   const sourceTokens = state.tokens;
   const tokens = [];
+  let hasTopLevelBlock = false;
 
   function appendSeparator() {
     const separator = new state.Token("block_separator", "br", 0);
@@ -42,52 +43,19 @@ markdown.core.ruler.after("block", "blank_line_separators", (state) => {
     );
   }
 
-  function blockProvidesBlankLine(startIndex, endIndex) {
-    let finalBlock;
-
-    for (let index = startIndex; index < endIndex; index += 1) {
-      const token = sourceTokens[index];
-
-      if (
-        token.type !== "inline" &&
-        token.block &&
-        token.nesting >= 0 &&
-        Array.isArray(token.map)
-      ) {
-        finalBlock = token;
-      }
-    }
-
-    return finalBlock?.type === "paragraph_open" && !finalBlock.hidden;
-  }
-
-  const blockStarts = sourceTokens
-    .map((token, index) => (startsTopLevelBlock(token) ? index : -1))
-    .filter((index) => index !== -1);
-  let blockIndex = 0;
-
-  for (let tokenIndex = 0; tokenIndex < sourceTokens.length; tokenIndex += 1) {
-    if (tokenIndex === blockStarts[blockIndex]) {
-      if (
-        blockIndex > 0 &&
-        !blockProvidesBlankLine(
-          blockStarts[blockIndex - 1],
-          tokenIndex,
-        )
-      ) {
+  for (const token of sourceTokens) {
+    if (startsTopLevelBlock(token)) {
+      if (hasTopLevelBlock) {
         appendSeparator();
       }
 
-      blockIndex += 1;
+      hasTopLevelBlock = true;
     }
 
-    tokens.push(sourceTokens[tokenIndex]);
+    tokens.push(token);
   }
 
-  if (
-    blockStarts.length > 0 &&
-    !blockProvidesBlankLine(blockStarts.at(-1), sourceTokens.length)
-  ) {
+  if (hasTopLevelBlock) {
     appendSeparator();
   }
 
@@ -247,7 +215,7 @@ function renderInline(tokens, environment) {
         const escapedSource = escapeAttribute(source);
         const escapedResolvedSource = escapeAttribute(resolvedSource);
         const escapedAlt = escapeAttribute(alt);
-        output += `<span class="md-image" data-alt="${escapedAlt}" data-src="${escapedSource}"><img src="${escapedResolvedSource}" alt="${escapedAlt}"${titleAttribute}></span>`;
+        output += `<span class="md-image" data-alt="${escapedAlt}" data-src="${escapedSource}"><br><img src="${escapedResolvedSource}" alt="${escapedAlt}"${titleAttribute}></span>`;
         break;
       }
       default:
@@ -297,8 +265,7 @@ markdown.renderer.rules.fence = (tokens, index) => {
 markdown.renderer.rules.code_block = (tokens, index) =>
   `<pre class="md-indented-code"><code>${markdown.utils.escapeHtml(tokens[index].content)}</code></pre>\n`;
 
-markdown.renderer.rules.block_separator = () =>
-  '<br class="md-block-separator" aria-hidden="true">\n';
+markdown.renderer.rules.block_separator = () => "<br>\n";
 
 export function renderMarkdown(source, environment = {}) {
   return markdown.render(source, environment);
@@ -432,7 +399,7 @@ ${content.trimEnd()}
     </main>
     <footer class="site-footer">
       <hr>
-      <br class="md-block-separator" aria-hidden="true">
+      <br>
       <p>© ${copyrightYear} ${siteTitle}</p>
     </footer>
   </body>
