@@ -284,7 +284,7 @@ function getPageDescription(source, fallbackDescription) {
   return fallbackDescription;
 }
 
-function renderHtml(config, page, content) {
+function renderHtml(config, page, content, copyrightYear) {
   const pageTitle = getPageTitle(page.source, config.title);
   const documentTitle =
     page.route === "/" ? pageTitle : `${pageTitle} — ${config.title}`;
@@ -326,6 +326,10 @@ function renderHtml(config, page, content) {
 ${content.trimEnd()}
       </article>
     </main>
+    <footer class="site-footer">
+      <hr>
+      <p>© ${copyrightYear} ${siteTitle}</p>
+    </footer>
   </body>
 </html>
 `;
@@ -371,6 +375,7 @@ function pageFromSourcePath(sourcePath, source) {
 }
 
 export async function build({ silent = false } = {}) {
+  const copyrightYear = new Date().getUTCFullYear();
   const [contentFiles, configSource, styles, favicon] = await Promise.all([
     collectContentFiles(),
     readFile(path.join(rootDirectory, "site.config.json"), "utf8"),
@@ -410,7 +415,7 @@ export async function build({ silent = false } = {}) {
   await Promise.all(
     pages.map(async (page) => {
       const content = renderMarkdown(page.source);
-      const html = renderHtml(config, page, content);
+      const html = renderHtml(config, page, content, copyrightYear);
 
       await mkdir(page.outputDirectory, { recursive: true });
       await Promise.all([

@@ -50,6 +50,24 @@ test("builds every page from its Markdown source", () => {
   assert.ok(articleHtml.includes(renderMarkdown(articleSource).trimEnd()));
 });
 
+test("adds an automated copyright footer to every page", () => {
+  const copyrightYear = new Date().getUTCFullYear();
+  const footer = new RegExp(
+    `<footer class="site-footer">\\s*<hr>\\s*<p>© ${copyrightYear} Etienne Martin<\\/p>\\s*<\\/footer>`,
+  );
+
+  for (const document of [html, articleHtml]) {
+    assert.match(document, footer);
+    assert.equal(document.match(/<footer class="site-footer">/g)?.length, 1);
+  }
+
+  assert.match(
+    styles,
+    /\.site-footer hr::before\s*{\s*content: "---" \/ "";/,
+  );
+  assert.match(styles, /\.site-footer\s*{[^}]*font: inherit;/s);
+});
+
 test("renders Markdown with semantic HTML", () => {
   const fixture = renderMarkdown(
     "# Name\n\n## Products\n\n*Italic* and **bold**.\n\n- Item\n",

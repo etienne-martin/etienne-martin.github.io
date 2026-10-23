@@ -107,7 +107,8 @@ blockquote::before,
 .md-inline-code::before,
 .md-inline-code::after,
 .md-code-block::before,
-.md-code-block::after {
+.md-code-block::after,
+.site-footer hr::before {
   color: var(--muted);
   cursor: default;
   user-select: none;
@@ -430,6 +431,29 @@ a:focus-visible {
 hr {
   border: 0;
   border-top: 1px solid var(--muted);
+}
+
+.site-footer {
+  width: min(
+    var(--content-width),
+    calc(100% - var(--page-gutter) - var(--page-gutter))
+  );
+  margin-block: 40px 0;
+  margin-inline-start: var(--page-gutter);
+  margin-inline-end: auto;
+  font: inherit;
+}
+
+.site-footer hr {
+  border: 0;
+}
+
+.site-footer hr::before {
+  content: "---" / "";
+}
+
+.site-footer p {
+  margin: 0;
 }
 
 ::selection {
