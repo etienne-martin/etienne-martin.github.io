@@ -3,7 +3,13 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { build, renderMarkdown } from "../scripts/build.mjs";
+import {
+  build,
+  createPageAssetResolver,
+  getFingerprintedFilename,
+  renderMarkdown,
+  validateAssetOutputPaths,
+} from "../scripts/build.mjs";
 
 const rootDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -15,6 +21,24 @@ const outputArticleDirectory = path.join(rootDirectory, "dist", articlePath);
 
 await build({ silent: true });
 
+const [distFiles, articleDistFiles] = await Promise.all([
+  readdir(path.join(rootDirectory, "dist")),
+  readdir(outputArticleDirectory),
+]);
+const stylesheetFilename = distFiles.find((file) =>
+  /^styles\.[a-f0-9]{12}\.css$/u.test(file),
+);
+const faviconFilename = distFiles.find((file) =>
+  /^favicon\.[a-f0-9]{12}\.svg$/u.test(file),
+);
+const fingerprintedArticleImageFilename = articleDistFiles.find((file) =>
+  /^browser\.[a-f0-9]{12}\.png$/u.test(file),
+);
+
+assert.ok(stylesheetFilename);
+assert.ok(faviconFilename);
+assert.ok(fingerprintedArticleImageFilename);
+
 const [
   source,
   articleSource,
@@ -25,29 +49,38 @@ const [
   emittedArticleSource,
   sourceArticleImage,
   emittedArticleImage,
+  emittedFingerprintedArticleImage,
   favicon,
-  distFiles,
-  articleDistFiles,
   devSource,
 ] = await Promise.all([
   readFile(path.join(rootDirectory, "content/index.md"), "utf8"),
   readFile(path.join(sourceArticleDirectory, "index.md"), "utf8"),
   readFile(path.join(rootDirectory, "dist/index.html"), "utf8"),
   readFile(path.join(outputArticleDirectory, "index.html"), "utf8"),
-  readFile(path.join(rootDirectory, "dist/styles.css"), "utf8"),
+  readFile(path.join(rootDirectory, "dist", stylesheetFilename), "utf8"),
   readFile(path.join(rootDirectory, "dist/index.md"), "utf8"),
   readFile(path.join(outputArticleDirectory, "index.md"), "utf8"),
   readFile(path.join(sourceArticleDirectory, "browser.png")),
   readFile(path.join(outputArticleDirectory, "browser.png")),
-  readFile(path.join(rootDirectory, "dist/favicon.svg"), "utf8"),
-  readdir(path.join(rootDirectory, "dist")),
-  readdir(outputArticleDirectory),
+  readFile(
+    path.join(outputArticleDirectory, fingerprintedArticleImageFilename),
+  ),
+  readFile(path.join(rootDirectory, "dist", faviconFilename), "utf8"),
   readFile(path.join(rootDirectory, "scripts/dev.mjs"), "utf8"),
 ]);
 
 test("builds every page from its Markdown source", () => {
   assert.ok(html.includes(renderMarkdown(source).trimEnd()));
-  assert.ok(articleHtml.includes(renderMarkdown(articleSource).trimEnd()));
+  assert.ok(
+    articleHtml.includes(
+      renderMarkdown(articleSource, {
+        resolveAssetUrl: (url) =>
+          url === "./browser.png"
+            ? `./${fingerprintedArticleImageFilename}`
+            : url,
+      }).trimEnd(),
+    ),
+  );
 });
 
 test("adds an automated copyright footer to every page", () => {
@@ -65,7 +98,49 @@ test("adds an automated copyright footer to every page", () => {
     styles,
     /\.site-footer hr::before\s*{\s*content: "---" \/ "";/,
   );
+  assert.match(styles, /\.site-footer hr\s*{[^}]*border: 0;/s);
   assert.match(styles, /\.site-footer\s*{[^}]*font: inherit;/s);
+});
+
+test("fingerprints generated assets from their contents", () => {
+  assert.equal(
+    stylesheetFilename,
+    getFingerprintedFilename("styles.css", styles),
+  );
+  assert.equal(
+    faviconFilename,
+    getFingerprintedFilename("favicon.svg", favicon),
+  );
+  assert.equal(
+    fingerprintedArticleImageFilename,
+    getFingerprintedFilename("browser.png", sourceArticleImage),
+  );
+  assert.notEqual(
+    getFingerprintedFilename("styles.css", `${styles}\n`),
+    stylesheetFilename,
+  );
+
+  for (const document of [html, articleHtml]) {
+    assert.ok(
+      document.includes(
+        `<link rel="stylesheet" href="/${stylesheetFilename}">`,
+      ),
+    );
+    assert.ok(
+      document.includes(
+        `<link rel="icon" href="/${faviconFilename}" type="image/svg+xml">`,
+      ),
+    );
+    assert.doesNotMatch(document, /href="\/(?:styles\.css|favicon\.svg)"/);
+    assert.doesNotMatch(document, /styles\.css\?v=/);
+  }
+
+  assert.match(
+    articleHtml,
+    new RegExp(
+      `<span class="md-image" data-alt="A little browser lifting weights" data-src="\\./browser\\.png"><img src="\\./${fingerprintedArticleImageFilename.replaceAll(".", "\\.")}"`,
+    ),
+  );
 });
 
 test("renders Markdown with semantic HTML", () => {
@@ -147,6 +222,95 @@ test("renders Markdown images as semantic images", () => {
   assert.match(
     fixture,
     /<span class="md-image" data-alt="Diagram" data-src="\.\/diagram\.png"><img src="\.\/diagram\.png" alt="Diagram"><\/span>/,
+  );
+});
+
+test("resolves asset URLs without changing their Markdown decoration", () => {
+  const fixture = renderMarkdown(
+    "[![Diagram](./diagram.png)](./diagram.pdf)\n",
+    {
+      resolveAssetUrl: (url) =>
+        ({
+          "./diagram.pdf": "./diagram.222222222222.pdf",
+          "./diagram.png": "./diagram.111111111111.png",
+        })[url] ?? url,
+    },
+  );
+
+  assert.ok(
+    fixture.includes(
+      '<span class="md-link" data-href="./diagram.pdf"><a href="./diagram.222222222222.pdf"><span class="md-image" data-alt="Diagram" data-src="./diagram.png"><img src="./diagram.111111111111.png" alt="Diagram"></span></a></span>',
+    ),
+  );
+});
+
+test("fingerprints root-relative content asset URLs", () => {
+  const assetSourcePath = path.join(sourceArticleDirectory, "browser.png");
+  const resolver = createPageAssetResolver(
+    { sourcePath: path.join(sourceArticleDirectory, "index.md") },
+    new Map([
+      [
+        assetSourcePath,
+        {
+          fingerprintedRelativePath: path.join(
+            articlePath,
+            fingerprintedArticleImageFilename,
+          ),
+          sourcePath: assetSourcePath,
+        },
+      ],
+    ]),
+  );
+  const authoredUrl = `/${articlePath}/browser.png?download=1#preview`;
+  const resolvedUrl = `/${articlePath}/${fingerprintedArticleImageFilename}?download=1#preview`;
+  const fixture = renderMarkdown(`![Diagram](${authoredUrl})\n`, {
+    resolveAssetUrl: resolver,
+  });
+
+  assert.equal(resolver(authoredUrl), resolvedUrl);
+  assert.ok(
+    fixture.includes(
+      `<span class="md-image" data-alt="Diagram" data-src="${authoredUrl}"><img src="${resolvedUrl}" alt="Diagram"></span>`,
+    ),
+  );
+});
+
+test("rejects content assets that collide with reserved build outputs", () => {
+  const asset = {
+    fingerprintedRelativePath: path.join(
+      articlePath,
+      "demo.111111111111.html",
+    ),
+    relativePath: path.join(articlePath, "index.html"),
+    sourcePath: path.join(sourceArticleDirectory, "index.html"),
+  };
+  const generatedPage = {
+    relativePath: path.join(articlePath, "index.html"),
+    sourcePath: `rendered HTML from ${path.join(sourceArticleDirectory, "index.md")}`,
+  };
+
+  assert.throws(
+    () => validateAssetOutputPaths([asset], [generatedPage]),
+    /Build output collision at .*index\.html/u,
+  );
+
+  assert.throws(
+    () =>
+      validateAssetOutputPaths(
+        [
+          {
+            ...asset,
+            relativePath: stylesheetFilename,
+          },
+        ],
+        [
+          {
+            relativePath: stylesheetFilename,
+            sourcePath: path.join(rootDirectory, "src/styles.css"),
+          },
+        ],
+      ),
+    /Build output collision at styles\.[a-f0-9]{12}\.css/u,
   );
 });
 
@@ -272,17 +436,21 @@ test("emits exact Markdown sources and colocated assets", () => {
   assert.equal(emittedSource, source);
   assert.equal(emittedArticleSource, articleSource);
   assert.deepEqual(emittedArticleImage, sourceArticleImage);
+  assert.deepEqual(emittedFingerprintedArticleImage, sourceArticleImage);
   assert.deepEqual(articleDistFiles.sort(), [
+    fingerprintedArticleImageFilename,
     "browser.png",
     "index.html",
     "index.md",
-  ]);
+  ].sort());
 });
 
 test("ships one minimal favicon", () => {
   assert.match(
     html,
-    /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/,
+    new RegExp(
+      `<link rel="icon" href="/${faviconFilename.replaceAll(".", "\\.")}" type="image/svg\\+xml">`,
+    ),
   );
   assert.match(favicon, /<svg[^>]*viewBox="0 0 64 64"/);
   assert.match(favicon, /<path[\s\S]*fill="#e9e9eb"/);
@@ -290,7 +458,7 @@ test("ships one minimal favicon", () => {
   assert.doesNotMatch(favicon, /#f3ef6d/i);
   assert.deepEqual(
     distFiles.filter((file) => /favicon|apple-touch|icon-\d/i.test(file)),
-    ["favicon.svg"],
+    [faviconFilename],
   );
 });
 
@@ -344,7 +512,12 @@ test("builds the article at its folder-derived route", () => {
     /<meta property="og:url" content="https:\/\/etiennemartin\.ca\/writing\/let-the-browser-do-it-for-you\/">/,
   );
   assert.match(articleHtml, /<h1>Let the Browser Do It for You<\/h1>/);
-  assert.match(articleHtml, /<img src="\.\/browser\.png" alt="A little browser lifting weights">/);
+  assert.match(
+    articleHtml,
+    new RegExp(
+      `<img src="\\./${fingerprintedArticleImageFilename.replaceAll(".", "\\.")}" alt="A little browser lifting weights">`,
+    ),
+  );
   assert.match(articleHtml, /<h2>URLs<\/h2>/);
   assert.match(articleHtml, /data-open="```javascript"/);
   assert.doesNotMatch(articleSource, /export const metadata|require\(/);

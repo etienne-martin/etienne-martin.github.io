@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   copyFile,
   mkdir,
@@ -68,7 +69,13 @@ function isExternalHref(href) {
   return /^(?:https?:)?\/\//i.test(href);
 }
 
-function renderLink(tokens, openingIndex) {
+function resolveAssetUrl(url, environment) {
+  return typeof environment?.resolveAssetUrl === "function"
+    ? environment.resolveAssetUrl(url)
+    : url;
+}
+
+function renderLink(tokens, openingIndex, environment) {
   const openingToken = tokens[openingIndex];
   const closingIndex = findClosingToken(
     tokens,
@@ -82,10 +89,12 @@ function renderLink(tokens, openingIndex) {
   }
 
   const href = openingToken.attrGet("href") ?? "";
+  const resolvedHref = resolveAssetUrl(href, environment);
   const labelTokens = tokens.slice(openingIndex + 1, closingIndex);
   const label = inlineText(labelTokens) || href;
-  const labelHtml = renderInline(labelTokens);
+  const labelHtml = renderInline(labelTokens, environment);
   const escapedHref = escapeAttribute(href);
+  const escapedResolvedHref = escapeAttribute(resolvedHref);
   const title = openingToken.attrGet("title");
   const titleAttribute = title
     ? ` title="${escapeAttribute(title)}"`
@@ -102,18 +111,18 @@ function renderLink(tokens, openingIndex) {
     const visibleHref = href.startsWith("mailto:") ? label : href;
 
     return {
-      html: `<span class="md-autolink"><a href="${escapedHref}"${titleAttribute}${externalLinkAttributes}>${markdown.utils.escapeHtml(visibleHref)}</a></span>`,
+      html: `<span class="md-autolink"><a href="${escapedResolvedHref}"${titleAttribute}${externalLinkAttributes}>${markdown.utils.escapeHtml(visibleHref)}</a></span>`,
       closingIndex,
     };
   }
 
   return {
-    html: `<span class="md-link" data-href="${escapedHref}"${titleDataAttribute}><a href="${escapedHref}"${titleAttribute}${externalLinkAttributes}>${labelHtml}</a></span>`,
+    html: `<span class="md-link" data-href="${escapedHref}"${titleDataAttribute}><a href="${escapedResolvedHref}"${titleAttribute}${externalLinkAttributes}>${labelHtml}</a></span>`,
     closingIndex,
   };
 }
 
-function renderInline(tokens) {
+function renderInline(tokens, environment) {
   let output = "";
 
   for (let index = 0; index < tokens.length; index += 1) {
@@ -151,21 +160,23 @@ function renderInline(tokens) {
         output += `<code class="md-inline-code" data-marker="${escapeAttribute(token.markup || "`")}">${markdown.utils.escapeHtml(token.content)}</code>`;
         break;
       case "link_open": {
-        const renderedLink = renderLink(tokens, index);
+        const renderedLink = renderLink(tokens, index, environment);
         output += renderedLink.html;
         index = renderedLink.closingIndex;
         break;
       }
       case "image": {
         const source = token.attrGet("src") ?? "";
+        const resolvedSource = resolveAssetUrl(source, environment);
         const alt = token.content || source;
         const title = token.attrGet("title");
         const titleAttribute = title
           ? ` title="${escapeAttribute(title)}"`
           : "";
         const escapedSource = escapeAttribute(source);
+        const escapedResolvedSource = escapeAttribute(resolvedSource);
         const escapedAlt = escapeAttribute(alt);
-        output += `<span class="md-image" data-alt="${escapedAlt}" data-src="${escapedSource}"><img src="${escapedSource}" alt="${escapedAlt}"${titleAttribute}></span>`;
+        output += `<span class="md-image" data-alt="${escapedAlt}" data-src="${escapedSource}"><img src="${escapedResolvedSource}" alt="${escapedAlt}"${titleAttribute}></span>`;
         break;
       }
       default:
@@ -176,7 +187,8 @@ function renderInline(tokens) {
   return output;
 }
 
-markdown.renderer.renderInline = (tokens) => renderInline(tokens);
+markdown.renderer.renderInline = (tokens, _options, environment) =>
+  renderInline(tokens, environment);
 
 markdown.renderer.rules.bullet_list_open = (tokens, index) => {
   const marker = tokens[index].markup || "-";
@@ -214,8 +226,19 @@ markdown.renderer.rules.fence = (tokens, index) => {
 markdown.renderer.rules.code_block = (tokens, index) =>
   `<pre class="md-indented-code"><code>${markdown.utils.escapeHtml(tokens[index].content)}</code></pre>\n`;
 
-export function renderMarkdown(source) {
-  return markdown.render(source);
+export function renderMarkdown(source, environment = {}) {
+  return markdown.render(source, environment);
+}
+
+export function getFingerprintedFilename(filename, contents) {
+  const extension = path.extname(filename);
+  const basename = path.basename(filename, extension);
+  const fingerprint = createHash("sha256")
+    .update(contents)
+    .digest("hex")
+    .slice(0, 12);
+
+  return `${basename}.${fingerprint}${extension}`;
 }
 
 function validateConfig(config) {
@@ -284,7 +307,14 @@ function getPageDescription(source, fallbackDescription) {
   return fallbackDescription;
 }
 
-function renderHtml(config, page, content, copyrightYear) {
+function renderHtml(
+  config,
+  page,
+  content,
+  copyrightYear,
+  stylesheetHref,
+  faviconHref,
+) {
   const pageTitle = getPageTitle(page.source, config.title);
   const documentTitle =
     page.route === "/" ? pageTitle : `${pageTitle} — ${config.title}`;
@@ -317,8 +347,8 @@ function renderHtml(config, page, content, copyrightYear) {
     <meta property="og:site_name" content="${siteTitle}">
     <title>${title}</title>
     <link rel="canonical" href="${pageUrl}">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="${faviconHref}" type="image/svg+xml">
+    <link rel="stylesheet" href="${stylesheetHref}">
   </head>
   <body>
     <main>
@@ -358,6 +388,108 @@ async function collectContentFiles(directory = contentDirectory) {
   return files;
 }
 
+function toUrlPath(filePath) {
+  return filePath.split(path.sep).join("/");
+}
+
+function encodeUrlPath(filePath) {
+  return toUrlPath(filePath)
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
+function fingerprintRelativePath(relativePath, contents) {
+  return path.join(
+    path.dirname(relativePath),
+    getFingerprintedFilename(path.basename(relativePath), contents),
+  );
+}
+
+export function createPageAssetResolver(page, assetsBySourcePath) {
+  const pageSourceDirectory = path.dirname(page.sourcePath);
+  const pageRelativeDirectory = path.relative(
+    contentDirectory,
+    pageSourceDirectory,
+  );
+
+  return (url) => {
+    if (
+      typeof url !== "string" ||
+      url === "" ||
+      /^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\?)/iu.test(url)
+    ) {
+      return url;
+    }
+
+    const suffixIndex = url.search(/[?#]/u);
+    const authoredPath = suffixIndex === -1 ? url : url.slice(0, suffixIndex);
+    const suffix = suffixIndex === -1 ? "" : url.slice(suffixIndex);
+    let decodedPath;
+
+    try {
+      decodedPath = decodeURIComponent(authoredPath);
+    } catch {
+      return url;
+    }
+
+    const rootRelative = decodedPath.startsWith("/");
+    const sourcePath = rootRelative
+      ? path.resolve(contentDirectory, decodedPath.slice(1))
+      : path.resolve(pageSourceDirectory, decodedPath);
+    const asset = assetsBySourcePath.get(sourcePath);
+
+    if (!asset) {
+      return url;
+    }
+
+    if (rootRelative) {
+      return `/${encodeUrlPath(asset.fingerprintedRelativePath)}${suffix}`;
+    }
+
+    const relativePath = path.relative(
+      pageRelativeDirectory,
+      asset.fingerprintedRelativePath,
+    );
+    const encodedPath = encodeUrlPath(relativePath);
+    const resolvedPath = encodedPath.startsWith(".")
+      ? encodedPath
+      : `./${encodedPath}`;
+
+    return `${resolvedPath}${suffix}`;
+  };
+}
+
+export function validateAssetOutputPaths(assets, reservedOutputs = []) {
+  const sourceByOutputPath = new Map();
+
+  function claimOutputPath(outputPath, sourcePath) {
+    const normalizedOutputPath = path.normalize(outputPath);
+    const existingSource = sourceByOutputPath.get(normalizedOutputPath);
+
+    if (existingSource && existingSource !== sourcePath) {
+      throw new Error(
+        `Build output collision at ${normalizedOutputPath}: ${existingSource} and ${sourcePath}`,
+      );
+    }
+
+    sourceByOutputPath.set(normalizedOutputPath, sourcePath);
+  }
+
+  for (const output of reservedOutputs) {
+    claimOutputPath(output.relativePath, output.sourcePath);
+  }
+
+  for (const asset of assets) {
+    for (const outputPath of [
+      asset.relativePath,
+      asset.fingerprintedRelativePath,
+    ]) {
+      claimOutputPath(outputPath, asset.sourcePath);
+    }
+  }
+}
+
 function pageFromSourcePath(sourcePath, source) {
   const relativePath = path.relative(contentDirectory, sourcePath);
   const relativeDirectory = path.dirname(relativePath);
@@ -385,6 +517,10 @@ export async function build({ silent = false } = {}) {
 
   const config = JSON.parse(configSource);
   validateConfig(config);
+  const stylesheetFilename = getFingerprintedFilename("styles.css", styles);
+  const faviconFilename = getFingerprintedFilename("favicon.svg", favicon);
+  const stylesheetHref = `/${stylesheetFilename}`;
+  const faviconHref = `/${faviconFilename}`;
 
   const pageSourcePaths = contentFiles.filter(
     (filePath) => path.basename(filePath) === "index.md",
@@ -400,22 +536,88 @@ export async function build({ silent = false } = {}) {
     ),
   );
 
-  await rm(outputDirectory, { recursive: true, force: true });
-  await mkdir(outputDirectory, { recursive: true });
-  await Promise.all(
+  const contentAssets = await Promise.all(
     contentFiles
       .filter((filePath) => path.basename(filePath) !== "index.md")
       .map(async (sourcePath) => {
+        const contents = await readFile(sourcePath);
         const relativePath = path.relative(contentDirectory, sourcePath);
-        const destinationPath = path.join(outputDirectory, relativePath);
-        await mkdir(path.dirname(destinationPath), { recursive: true });
-        await copyFile(sourcePath, destinationPath);
+
+        return {
+          contents,
+          fingerprintedRelativePath: fingerprintRelativePath(
+            relativePath,
+            contents,
+          ),
+          relativePath,
+          sourcePath,
+        };
       }),
+  );
+  const reservedOutputs = [
+    ...pages.flatMap((page) => {
+      const relativeDirectory = path.relative(
+        outputDirectory,
+        page.outputDirectory,
+      );
+
+      return [
+        {
+          relativePath: path.join(relativeDirectory, "index.html"),
+          sourcePath: `rendered HTML from ${page.sourcePath}`,
+        },
+        {
+          relativePath: path.join(relativeDirectory, "index.md"),
+          sourcePath: `raw Markdown from ${page.sourcePath}`,
+        },
+      ];
+    }),
+    {
+      relativePath: stylesheetFilename,
+      sourcePath: path.join(rootDirectory, "src/styles.css"),
+    },
+    {
+      relativePath: faviconFilename,
+      sourcePath: path.join(rootDirectory, "public/favicon.svg"),
+    },
+  ];
+  validateAssetOutputPaths(contentAssets, reservedOutputs);
+  const assetsBySourcePath = new Map(
+    contentAssets.map((asset) => [path.resolve(asset.sourcePath), asset]),
+  );
+
+  await rm(outputDirectory, { recursive: true, force: true });
+  await mkdir(outputDirectory, { recursive: true });
+  await Promise.all(
+    contentAssets.map(async (asset) => {
+      const authoredDestinationPath = path.join(
+        outputDirectory,
+        asset.relativePath,
+      );
+      const fingerprintedDestinationPath = path.join(
+        outputDirectory,
+        asset.fingerprintedRelativePath,
+      );
+      await mkdir(path.dirname(authoredDestinationPath), { recursive: true });
+      await Promise.all([
+        copyFile(asset.sourcePath, authoredDestinationPath),
+        writeFile(fingerprintedDestinationPath, asset.contents),
+      ]);
+    }),
   );
   await Promise.all(
     pages.map(async (page) => {
-      const content = renderMarkdown(page.source);
-      const html = renderHtml(config, page, content, copyrightYear);
+      const content = renderMarkdown(page.source, {
+        resolveAssetUrl: createPageAssetResolver(page, assetsBySourcePath),
+      });
+      const html = renderHtml(
+        config,
+        page,
+        content,
+        copyrightYear,
+        stylesheetHref,
+        faviconHref,
+      );
 
       await mkdir(page.outputDirectory, { recursive: true });
       await Promise.all([
@@ -425,8 +627,8 @@ export async function build({ silent = false } = {}) {
     }),
   );
   await Promise.all([
-    writeFile(path.join(outputDirectory, "styles.css"), styles),
-    writeFile(path.join(outputDirectory, "favicon.svg"), favicon),
+    writeFile(path.join(outputDirectory, stylesheetFilename), styles),
+    writeFile(path.join(outputDirectory, faviconFilename), favicon),
   ]);
 
   if (!silent) {
