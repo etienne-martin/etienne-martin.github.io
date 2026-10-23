@@ -55,7 +55,7 @@ main {
   max-width: none;
 }
 
-article > :not(.md-code-block) {
+article > :not(.md-code-block, .md-block-separator) {
   width: min(
     var(--content-width),
     calc(100% - var(--page-gutter) - var(--page-gutter))
@@ -64,12 +64,8 @@ article > :not(.md-code-block) {
   margin-inline-end: auto;
 }
 
-article > :first-child {
-  margin-top: 0;
-}
-
-article > :last-child {
-  margin-bottom: 0;
+article > :not(.md-code-block, p, .md-block-separator) {
+  margin-block: 0;
 }
 
 h1,
@@ -78,10 +74,20 @@ h3,
 h4,
 h5,
 h6 {
-  margin: 40px 0 20px;
+  margin: 0;
+  padding-top: 20px;
   font: inherit;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+article > h1:first-child,
+article > h2:first-child,
+article > h3:first-child,
+article > h4:first-child,
+article > h5:first-child,
+article > h6:first-child {
+  padding-top: 0;
 }
 
 h1::before,
@@ -245,6 +251,7 @@ blockquote::before {
 .md-code-block {
   width: 100%;
   max-width: none;
+  margin-block: 0;
   margin-inline: 0;
   padding-block: 0;
   padding-inline-start: var(--page-gutter);
@@ -438,13 +445,15 @@ hr {
     var(--content-width),
     calc(100% - var(--page-gutter) - var(--page-gutter))
   );
-  margin-block: 40px 0;
+  margin-block: 0;
   margin-inline-start: var(--page-gutter);
   margin-inline-end: auto;
+  padding-top: 20px;
   font: inherit;
 }
 
 .site-footer hr {
+  margin: 0;
   border: 0;
 }
 

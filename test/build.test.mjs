@@ -86,7 +86,7 @@ test("builds every page from its Markdown source", () => {
 test("adds an automated copyright footer to every page", () => {
   const copyrightYear = new Date().getUTCFullYear();
   const footer = new RegExp(
-    `<footer class="site-footer">\\s*<hr>\\s*<p>© ${copyrightYear} Etienne Martin<\\/p>\\s*<\\/footer>`,
+    `<footer class="site-footer">\\s*<hr>\\s*<br class="md-block-separator" aria-hidden="true">\\s*<p>© ${copyrightYear} Etienne Martin<\\/p>\\s*<\\/footer>`,
   );
 
   for (const document of [html, articleHtml]) {
@@ -159,6 +159,80 @@ test("renders Markdown with semantic HTML", () => {
     /<strong class="md-strong" data-marker="\*\*">bold<\/strong>/,
   );
   assert.match(fixture, /<ul data-marker="-">\s*<li>/);
+  assert.equal(
+    fixture.match(
+      /<br class="md-block-separator" aria-hidden="true">/g,
+    )?.length,
+    3,
+  );
+});
+
+test("collapses authored blank lines into single top-level breaks", () => {
+  const fixture = renderMarkdown(
+    "# Title\n\n\n\n\nFirst paragraph.\n\n\n\n\nSecond paragraph.\n## Adjacent heading\n\n\n\n\n- One\n- Two\n\n\n\n\n---\n\n\n\n\nAfter.\n",
+  );
+  const compactFixture = renderMarkdown(
+    "# Title\n\nFirst paragraph.\n\nSecond paragraph.\n## Adjacent heading\n\n- One\n- Two\n\n---\n\nAfter.\n",
+  );
+
+  assert.equal(fixture, compactFixture);
+  assert.equal(renderMarkdown("   Trim me   \n"), "<p>Trim me</p>\n");
+  assert.equal(
+    fixture.match(
+      /<br class="md-block-separator" aria-hidden="true">/g,
+    )?.length,
+    4,
+  );
+  assert.match(
+    fixture,
+    /<h1>Title<\/h1>\s*<br class="md-block-separator" aria-hidden="true">\s*<p>First paragraph\.<\/p>/,
+  );
+  assert.match(
+    fixture,
+    /<p>First paragraph\.<\/p>\s*<p>Second paragraph\.<\/p>/,
+  );
+  assert.match(
+    fixture,
+    /<p>Second paragraph\.<\/p>\s*<h2>Adjacent heading<\/h2>/,
+  );
+  assert.doesNotMatch(
+    fixture,
+    /<li>One<\/li>\s*<br class="md-block-separator" aria-hidden="true">\s*<li>Two<\/li>/,
+  );
+  assert.match(
+    fixture,
+    /<\/ul>\s*<br class="md-block-separator" aria-hidden="true">\s*<hr>\s*<br class="md-block-separator" aria-hidden="true">\s*<p>After\.<\/p>/,
+  );
+  assert.match(
+    renderMarkdown("- Final item\n"),
+    /<\/ul>\s*<br class="md-block-separator" aria-hidden="true">\s*$/,
+  );
+});
+
+test("avoids duplicate breaks after blocks ending in paragraphs", () => {
+  const blockquote = renderMarkdown("> Quoted paragraph.\n\nAfter.\n");
+  const looseList = renderMarkdown(
+    "- First paragraph.\n\n  Second paragraph.\n\nAfter.\n",
+  );
+  const tightList = renderMarkdown("- First item\n- Second item\n\nAfter.\n");
+
+  assert.match(
+    blockquote,
+    /<\/blockquote>\s*<p>After\.<\/p>/,
+  );
+  assert.doesNotMatch(
+    blockquote,
+    /<\/blockquote>\s*<br class="md-block-separator"/,
+  );
+  assert.match(looseList, /<\/ul>\s*<p>After\.<\/p>/);
+  assert.doesNotMatch(
+    looseList,
+    /<\/ul>\s*<br class="md-block-separator"/,
+  );
+  assert.match(
+    tightList,
+    /<\/ul>\s*<br class="md-block-separator" aria-hidden="true">\s*<p>After\.<\/p>/,
+  );
 });
 
 test("highlights fenced code during the build", () => {
@@ -337,8 +411,12 @@ test("styles semantic elements as raw Markdown", () => {
     .find((rule) => rule.includes("width: max-content"));
   const bodyRule = styles.match(/body\s*{[^}]*}/s)?.[0];
   const contentRule = styles.match(
-    /article > :not\(\.md-code-block\)\s*{[^}]*}/s,
+    /article > :not\(\.md-code-block, \.md-block-separator\)\s*{[^}]*}/s,
   )?.[0];
+  const topLevelSpacingRule = styles.match(
+    /article > :not\(\.md-code-block, p, \.md-block-separator\)\s*{[^}]*}/s,
+  )?.[0];
+  const headingRule = styles.match(/h1,[\s\S]*?h6\s*{[^}]*}/s)?.[0];
 
   assert.ok(htmlRule);
   assert.ok(codeFontRule);
@@ -346,6 +424,8 @@ test("styles semantic elements as raw Markdown", () => {
   assert.ok(codeContentRule);
   assert.ok(bodyRule);
   assert.ok(contentRule);
+  assert.ok(topLevelSpacingRule);
+  assert.ok(headingRule);
   assert.match(styles, /h2::before\s*{\s*content: "## " \/ "";/);
   assert.match(styles, /ul > li::before\s*{[^}]*content: "- " \/ "";/s);
   assert.match(
@@ -376,7 +456,11 @@ test("styles semantic elements as raw Markdown", () => {
   assert.match(bodyRule, /padding-inline: 0;/);
   assert.match(contentRule, /var\(--content-width\)/);
   assert.match(contentRule, /margin-inline-start: var\(--page-gutter\);/);
+  assert.match(topLevelSpacingRule, /margin-block: 0;/);
+  assert.match(headingRule, /margin: 0;/);
+  assert.match(headingRule, /padding-top: 20px;/);
   assert.match(codeBlockRule, /width: 100%;/);
+  assert.match(codeBlockRule, /margin-block: 0;/);
   assert.match(codeBlockRule, /margin-inline: 0;/);
   assert.match(codeBlockRule, /padding-block: 0;/);
   assert.match(
@@ -430,6 +514,11 @@ test("styles semantic elements as raw Markdown", () => {
     styles,
     /@media \(max-width: 600px\)\s*{\s*:root\s*{\s*--page-gutter: 24px;/s,
   );
+  assert.match(
+    styles,
+    /\.site-footer\s*{[^}]*margin-block: 0;[^}]*padding-top: 20px;/s,
+  );
+  assert.match(styles, /\.site-footer hr\s*{[^}]*margin: 0;/s);
 });
 
 test("emits exact Markdown sources and colocated assets", () => {

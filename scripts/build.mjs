@@ -23,6 +23,77 @@ const markdown = new MarkdownIt({
   typographer: false,
 });
 
+markdown.core.ruler.after("block", "blank_line_separators", (state) => {
+  const sourceTokens = state.tokens;
+  const tokens = [];
+
+  function appendSeparator() {
+    const separator = new state.Token("block_separator", "br", 0);
+    separator.block = true;
+    tokens.push(separator);
+  }
+
+  function startsTopLevelBlock(token) {
+    return (
+      token.block &&
+      token.level === 0 &&
+      token.nesting >= 0 &&
+      Array.isArray(token.map)
+    );
+  }
+
+  function blockProvidesBlankLine(startIndex, endIndex) {
+    let finalBlock;
+
+    for (let index = startIndex; index < endIndex; index += 1) {
+      const token = sourceTokens[index];
+
+      if (
+        token.type !== "inline" &&
+        token.block &&
+        token.nesting >= 0 &&
+        Array.isArray(token.map)
+      ) {
+        finalBlock = token;
+      }
+    }
+
+    return finalBlock?.type === "paragraph_open" && !finalBlock.hidden;
+  }
+
+  const blockStarts = sourceTokens
+    .map((token, index) => (startsTopLevelBlock(token) ? index : -1))
+    .filter((index) => index !== -1);
+  let blockIndex = 0;
+
+  for (let tokenIndex = 0; tokenIndex < sourceTokens.length; tokenIndex += 1) {
+    if (tokenIndex === blockStarts[blockIndex]) {
+      if (
+        blockIndex > 0 &&
+        !blockProvidesBlankLine(
+          blockStarts[blockIndex - 1],
+          tokenIndex,
+        )
+      ) {
+        appendSeparator();
+      }
+
+      blockIndex += 1;
+    }
+
+    tokens.push(sourceTokens[tokenIndex]);
+  }
+
+  if (
+    blockStarts.length > 0 &&
+    !blockProvidesBlankLine(blockStarts.at(-1), sourceTokens.length)
+  ) {
+    appendSeparator();
+  }
+
+  state.tokens = tokens;
+});
+
 function escapeAttribute(value) {
   return markdown.utils.escapeHtml(String(value));
 }
@@ -226,6 +297,9 @@ markdown.renderer.rules.fence = (tokens, index) => {
 markdown.renderer.rules.code_block = (tokens, index) =>
   `<pre class="md-indented-code"><code>${markdown.utils.escapeHtml(tokens[index].content)}</code></pre>\n`;
 
+markdown.renderer.rules.block_separator = () =>
+  '<br class="md-block-separator" aria-hidden="true">\n';
+
 export function renderMarkdown(source, environment = {}) {
   return markdown.render(source, environment);
 }
@@ -358,6 +432,7 @@ ${content.trimEnd()}
     </main>
     <footer class="site-footer">
       <hr>
+      <br class="md-block-separator" aria-hidden="true">
       <p>© ${copyrightYear} ${siteTitle}</p>
     </footer>
   </body>
