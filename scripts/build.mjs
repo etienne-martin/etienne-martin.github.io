@@ -150,13 +150,13 @@ function renderLink(tokens, openingIndex, environment) {
     const visibleHref = href.startsWith("mailto:") ? label : href;
 
     return {
-      html: `<span class="md-autolink"><a href="${escapedResolvedHref}"${titleAttribute}${externalLinkAttributes}>${markdown.utils.escapeHtml(visibleHref)}</a></span>`,
+      html: `<a class="md-autolink" href="${escapedResolvedHref}"${titleAttribute}${externalLinkAttributes}><span class="md-link-label">${markdown.utils.escapeHtml(visibleHref)}</span></a>`,
       closingIndex,
     };
   }
 
   return {
-    html: `<span class="md-link" data-href="${escapedHref}"${titleDataAttribute}><a href="${escapedResolvedHref}"${titleAttribute}${externalLinkAttributes}>${labelHtml}</a></span>`,
+    html: `<a class="md-link" data-href="${escapedHref}"${titleDataAttribute} href="${escapedResolvedHref}"${titleAttribute}${externalLinkAttributes}><span class="md-link-label">${labelHtml}</span></a>`,
     closingIndex,
   };
 }

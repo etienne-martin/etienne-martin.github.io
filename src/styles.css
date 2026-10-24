@@ -396,9 +396,29 @@ blockquote::before {
   content: ">" / "";
 }
 
+.md-link::before,
+.md-link::after,
+.md-autolink::before,
+.md-autolink::after {
+  cursor: pointer;
+}
+
 .md-link,
 .md-autolink {
+  font-weight: 400;
   overflow-wrap: anywhere;
+}
+
+.md-link-label {
+  font-weight: 600;
+}
+
+.md-link:is(:hover, :focus-visible) > .md-link-label,
+.md-autolink:is(:hover, :focus-visible) > .md-link-label {
+  text-decoration: underline;
+  text-decoration-color: var(--muted);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 a {

@@ -278,10 +278,11 @@ test("renders raw-looking external links that open in a new tab", () => {
   assert.match(fixture, /<h2>Products<\/h2>/);
   assert.ok(
     fixture.includes(
-      '<span class="md-link" data-href="https://example.com/path?q=1&amp;ref=test"><a href="https://example.com/path?q=1&amp;ref=test" target="_blank" rel="noopener noreferrer">Example</a></span>',
+      '<a class="md-link" data-href="https://example.com/path?q=1&amp;ref=test" href="https://example.com/path?q=1&amp;ref=test" target="_blank" rel="noopener noreferrer"><span class="md-link-label">Example</span></a>',
     ),
   );
   assert.doesNotMatch(fixture, /<a[^>]*>https:\/\/example\.com/);
+  assert.doesNotMatch(fixture, /<span class="md-link"/);
   assert.doesNotMatch(fixture, /data-external/);
 });
 
@@ -290,9 +291,34 @@ test("keeps internal links in the current tab", () => {
 
   assert.match(
     fixture,
-    /<span class="md-link" data-href="\/notes\/"><a href="\/notes\/">Notes<\/a><\/span>/,
+    /<a class="md-link" data-href="\/notes\/" href="\/notes\/"><span class="md-link-label">Notes<\/span><\/a>/,
   );
   assert.doesNotMatch(fixture, /target="_blank"/);
+});
+
+test("makes autolink syntax part of the link target", () => {
+  const webFixture = renderMarkdown("<https://example.com/path>\n");
+  const emailFixture = renderMarkdown("<hello@example.com>\n");
+
+  assert.match(
+    webFixture,
+    /<a class="md-autolink" href="https:\/\/example\.com\/path" target="_blank" rel="noopener noreferrer"><span class="md-link-label">https:\/\/example\.com\/path<\/span><\/a>/,
+  );
+  assert.doesNotMatch(webFixture, /<span class="md-autolink"/);
+  assert.match(
+    emailFixture,
+    /<a class="md-autolink" href="mailto:hello@example\.com"><span class="md-link-label">hello@example\.com<\/span><\/a>/,
+  );
+  assert.doesNotMatch(emailFixture, /target="_blank"/);
+});
+
+test("keeps link titles on the full link target", () => {
+  const fixture = renderMarkdown('[Notes](/notes/ "Read more")\n');
+
+  assert.match(
+    fixture,
+    /<a class="md-link" data-href="\/notes\/" data-title="Read more" href="\/notes\/" title="Read more"><span class="md-link-label">Notes<\/span><\/a>/,
+  );
 });
 
 test("renders Markdown images as semantic images", () => {
@@ -319,7 +345,7 @@ test("resolves asset URLs without changing their Markdown decoration", () => {
 
   assert.ok(
     fixture.includes(
-      '<span class="md-link" data-href="./diagram.pdf"><a href="./diagram.222222222222.pdf"><span class="md-image" data-alt="Diagram" data-src="./diagram.png"><br><img src="./diagram.111111111111.png" alt="Diagram"></span></a></span>',
+      '<a class="md-link" data-href="./diagram.pdf" href="./diagram.222222222222.pdf"><span class="md-link-label"><span class="md-image" data-alt="Diagram" data-src="./diagram.png"><br><img src="./diagram.111111111111.png" alt="Diagram"></span></span></a>',
     ),
   );
 });
@@ -453,10 +479,19 @@ test("styles semantic elements as raw Markdown", () => {
   assert.match(styles, /user-select: none;/);
   assert.match(
     styles,
-    /\.md-link,[\s\S]*\.md-autolink\s*{\s*overflow-wrap: anywhere;/,
+    /\.md-link,[\s\S]*\.md-autolink\s*{\s*font-weight: 400;\s*overflow-wrap: anywhere;/,
+  );
+  assert.match(
+    styles,
+    /\.md-link:is\(:hover, :focus-visible\) > \.md-link-label,[\s\S]*\.md-autolink:is\(:hover, :focus-visible\) > \.md-link-label\s*{[^}]*text-decoration: underline;[^}]*text-decoration-color: var\(--muted\);/s,
+  );
+  assert.match(
+    styles,
+    /\.md-link::before,[\s\S]*\.md-autolink::after\s*{\s*cursor: pointer;/,
   );
   assert.match(styles, /h1,[\s\S]*font: inherit;[\s\S]*font-weight: 700;/);
   assert.match(styles, /h1,[\s\S]*text-transform: uppercase;/);
+  assert.match(styles, /\.md-link-label\s*{\s*font-weight: 600;/);
   assert.match(
     styles,
     /a\s*{[^}]*font-weight: 600;[^}]*text-decoration: none;/s,
@@ -627,7 +662,7 @@ test("builds the homepage Writing section and internal article link", () => {
   assert.match(html, /<h2>Writing<\/h2>/);
   assert.match(
     html,
-    /<a href="\/writing\/let-the-browser-do-it-for-you\/">Let the Browser Do It for You<\/a>/,
+    /<a class="md-link" data-href="\/writing\/let-the-browser-do-it-for-you\/" href="\/writing\/let-the-browser-do-it-for-you\/"><span class="md-link-label">Let the Browser Do It for You<\/span><\/a>/,
   );
   assert.doesNotMatch(
     html,
