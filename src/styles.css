@@ -46,8 +46,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 20px;
+  font-size: 13px;
+  line-height: 21px;
 }
 
 main {
@@ -375,6 +375,10 @@ blockquote::before {
   display: block;
 }
 
+.md-image picture {
+  display: block;
+}
+
 .md-image::before {
   display: block;
   content: "![" attr(data-alt) "](" attr(data-src) ")" / "";
@@ -467,5 +471,10 @@ hr {
 @media (max-width: 600px) {
   :root {
     --page-gutter: 24px;
+  }
+
+  body {
+    font-size: 12px;
+    line-height: 20px;
   }
 }

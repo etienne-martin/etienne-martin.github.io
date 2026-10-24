@@ -3,9 +3,11 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 import {
   build,
   createPageAssetResolver,
+  createPageImageResolver,
   getFingerprintedFilename,
   renderMarkdown,
   validateAssetOutputPaths,
@@ -34,10 +36,29 @@ const faviconFilename = distFiles.find((file) =>
 const fingerprintedArticleImageFilename = articleDistFiles.find((file) =>
   /^browser\.[a-f0-9]{12}\.png$/u.test(file),
 );
+const responsiveArticleImageFilenames = articleDistFiles
+  .filter((file) =>
+    /^browser-(?:320|640|1120)w\.[a-f0-9]{12}\.(?:png|webp)$/u.test(
+      file,
+    ),
+  )
+  .sort();
 
 assert.ok(stylesheetFilename);
 assert.ok(faviconFilename);
 assert.ok(fingerprintedArticleImageFilename);
+assert.equal(responsiveArticleImageFilenames.length, 6);
+
+function getResponsiveArticleImageFilename(width, format) {
+  const filename = responsiveArticleImageFilenames.find(
+    (candidate) =>
+      candidate.startsWith(`browser-${width}w.`) &&
+      candidate.endsWith(`.${format}`),
+  );
+
+  assert.ok(filename);
+  return filename;
+}
 
 const [
   source,
@@ -69,15 +90,51 @@ const [
   readFile(path.join(rootDirectory, "scripts/dev.mjs"), "utf8"),
 ]);
 
+const responsiveArticleImages = await Promise.all(
+  responsiveArticleImageFilenames.map(async (filename) => {
+    const contents = await readFile(path.join(outputArticleDirectory, filename));
+    const metadata = await sharp(contents).metadata();
+
+    return { contents, filename, metadata };
+  }),
+);
+const articleImageAsset = {
+  fingerprintedRelativePath: path.join(
+    articlePath,
+    fingerprintedArticleImageFilename,
+  ),
+  responsiveImage: {
+    height: 1668,
+    variants: responsiveArticleImages
+      .map(({ filename, metadata }) => ({
+        format: metadata.format,
+        relativePath: path.join(articlePath, filename),
+        width: metadata.width,
+      }))
+      .sort((left, right) => left.width - right.width),
+    width: 2388,
+  },
+};
+const articlePage = {
+  sourcePath: path.join(sourceArticleDirectory, "index.md"),
+};
+const articleAssetsBySourcePath = new Map([
+  [path.join(sourceArticleDirectory, "browser.png"), articleImageAsset],
+]);
+
 test("builds every page from its Markdown source", () => {
   assert.ok(html.includes(renderMarkdown(source).trimEnd()));
   assert.ok(
     articleHtml.includes(
       renderMarkdown(articleSource, {
-        resolveAssetUrl: (url) =>
-          url === "./browser.png"
-            ? `./${fingerprintedArticleImageFilename}`
-            : url,
+        resolveAssetUrl: createPageAssetResolver(
+          articlePage,
+          articleAssetsBySourcePath,
+        ),
+        resolveImageAsset: createPageImageResolver(
+          articlePage,
+          articleAssetsBySourcePath,
+        ),
       }).trimEnd(),
     ),
   );
@@ -100,6 +157,22 @@ test("adds an automated copyright footer to every page", () => {
   );
   assert.match(styles, /\.site-footer hr\s*{[^}]*border: 0;/s);
   assert.match(styles, /\.site-footer\s*{[^}]*font: inherit;/s);
+});
+
+test("adds a Markdown-styled home link to article pages", () => {
+  assert.doesNotMatch(html, /<nav class="site-navigation"/u);
+  assert.match(
+    articleHtml,
+    /<main>\s*<nav class="site-navigation" aria-label="Site">[\s\S]*?<a class="md-link" data-href="\/" href="\/"><span class="md-link-label">Home<\/span><\/a>[\s\S]*?<\/nav>\s*<article>/u,
+  );
+  assert.equal(
+    articleHtml.match(/<nav class="site-navigation"/gu)?.length,
+    1,
+  );
+  assert.doesNotMatch(
+    articleHtml,
+    /href="\/"[^>]*target="_blank"/u,
+  );
 });
 
 test("fingerprints generated assets from their contents", () => {
@@ -138,9 +211,36 @@ test("fingerprints generated assets from their contents", () => {
   assert.match(
     articleHtml,
     new RegExp(
-      `<span class="md-image" data-alt="A little browser lifting weights" data-src="\\./browser\\.png"><br><img src="\\./${fingerprintedArticleImageFilename.replaceAll(".", "\\.")}"`,
+      `<span class="md-image" data-alt="A little browser lifting weights" data-src="\\./browser\\.png"><br><picture><source type="image/webp"`,
     ),
   );
+});
+
+test("generates responsive, content-hashed image variants", () => {
+  const expectedWidths = [320, 640, 1120];
+
+  for (const { contents, filename, metadata } of responsiveArticleImages) {
+    const match = filename.match(
+      /^browser-(\d+)w\.[a-f0-9]{12}\.(png|webp)$/u,
+    );
+
+    assert.ok(match);
+    const width = Number.parseInt(match[1], 10);
+    const format = match[2];
+    assert.ok(expectedWidths.includes(width));
+    assert.equal(metadata.width, width);
+    assert.equal(metadata.format, format);
+    assert.equal(
+      filename,
+      getFingerprintedFilename(`browser-${width}w.${format}`, contents),
+    );
+    assert.ok(contents.byteLength < sourceArticleImage.byteLength);
+  }
+
+  for (const width of expectedWidths) {
+    assert.ok(getResponsiveArticleImageFilename(width, "png"));
+    assert.ok(getResponsiveArticleImageFilename(width, "webp"));
+  }
 });
 
 test("renders Markdown with semantic HTML", () => {
@@ -331,6 +431,34 @@ test("renders Markdown images as semantic images", () => {
   assert.match(fixture, /<\/span><\/p>\s*<br>\s*$/);
 });
 
+test("renders responsive local images with srcset", () => {
+  const webpSrcset = [320, 640, 1120]
+    .map(
+      (width) =>
+        `./${getResponsiveArticleImageFilename(width, "webp")} ${width}w`,
+    )
+    .join(", ");
+  const pngSrcset = [320, 640, 1120]
+    .map(
+      (width) =>
+        `./${getResponsiveArticleImageFilename(width, "png")} ${width}w`,
+    )
+    .join(", ");
+
+  assert.ok(
+    articleHtml.includes(
+      `<picture><source type="image/webp" srcset="${webpSrcset}">`,
+    ),
+  );
+  assert.ok(
+    articleHtml.includes(
+      `<img src="./${getResponsiveArticleImageFilename(1120, "png")}" srcset="${pngSrcset}" width="2388" height="1668" alt="A little browser lifting weights">`,
+    ),
+  );
+  assert.doesNotMatch(articleHtml, /\ssizes=/u);
+  assert.doesNotMatch(articleHtml, /<img[^>]*loading="lazy"/u);
+});
+
 test("resolves asset URLs without changing their Markdown decoration", () => {
   const fixture = renderMarkdown(
     "[![Diagram](./diagram.png)](./diagram.pdf)\n",
@@ -381,6 +509,37 @@ test("fingerprints root-relative content asset URLs", () => {
   );
 });
 
+test("resolves responsive image candidates with URL suffixes", () => {
+  const resolver = createPageImageResolver(
+    articlePage,
+    articleAssetsBySourcePath,
+  );
+  const authoredUrl = `/${articlePath}/browser.png?download=1#preview`;
+  const resolved = resolver(authoredUrl);
+
+  assert.ok(resolved);
+  assert.equal(resolved.width, 2388);
+  assert.equal(resolved.height, 1668);
+  assert.equal("sizes" in resolved, false);
+  assert.equal(
+    resolved.src,
+    `/${articlePath}/${getResponsiveArticleImageFilename(1120, "png")}?download=1#preview`,
+  );
+
+  for (const width of [320, 640, 1120]) {
+    assert.ok(
+      resolved.srcset.includes(
+        `/${articlePath}/${getResponsiveArticleImageFilename(width, "png")}?download=1#preview ${width}w`,
+      ),
+    );
+    assert.ok(
+      resolved.sources[0].srcset.includes(
+        `/${articlePath}/${getResponsiveArticleImageFilename(width, "webp")}?download=1#preview ${width}w`,
+      ),
+    );
+  }
+});
+
 test("rejects content assets that collide with reserved build outputs", () => {
   const asset = {
     fingerprintedRelativePath: path.join(
@@ -417,6 +576,26 @@ test("rejects content assets that collide with reserved build outputs", () => {
         ],
       ),
     /Build output collision at styles\.[a-f0-9]{12}\.css/u,
+  );
+
+  assert.throws(
+    () =>
+      validateAssetOutputPaths([
+        {
+          ...asset,
+          relativePath: path.join(articlePath, "browser.png"),
+          responsiveImage: {
+            variants: [
+              {
+                format: "webp",
+                relativePath: path.join(articlePath, "browser.png"),
+                width: 320,
+              },
+            ],
+          },
+        },
+      ]),
+    /Build output collision at .*browser\.png/u,
   );
 });
 
@@ -503,10 +682,13 @@ test("styles semantic elements as raw Markdown", () => {
   assert.match(codeFontRule, /font:\s*inherit;/);
   assert.match(bodyRule, /padding-block: var\(--page-gutter\);/);
   assert.match(bodyRule, /padding-inline: var\(--page-gutter\);/);
+  assert.match(bodyRule, /font-size: 13px;/);
+  assert.match(bodyRule, /line-height: 21px;/);
   assert.match(mainRule, /width: 100%;/);
   assert.match(mainRule, /max-width: var\(--content-width\);/);
   assert.doesNotMatch(styles, /article\s*>/);
   assert.match(headingRule, /margin: 0;/);
+  assert.doesNotMatch(styles, /text-wrap:/);
   assert.doesNotMatch(headingRule, /padding-(?:top|block)/);
   assert.match(blockSpacingRule, /margin: 0;/);
   assert.doesNotMatch(listItemRule, /display:/);
@@ -571,6 +753,10 @@ test("styles semantic elements as raw Markdown", () => {
     styles,
     /@media \(max-width: 600px\)\s*{\s*:root\s*{\s*--page-gutter: 24px;/s,
   );
+  assert.match(
+    styles,
+    /@media \(max-width: 600px\)[\s\S]*?body\s*{\s*font-size: 12px;\s*line-height: 20px;/s,
+  );
   assert.doesNotMatch(
     footerRule,
     /padding-(?:block|top|bottom)/,
@@ -615,6 +801,7 @@ test("emits exact Markdown sources and colocated assets", () => {
   assert.deepEqual(emittedArticleImage, sourceArticleImage);
   assert.deepEqual(emittedFingerprintedArticleImage, sourceArticleImage);
   assert.deepEqual(articleDistFiles.sort(), [
+    ...responsiveArticleImageFilenames,
     fingerprintedArticleImageFilename,
     "browser.png",
     "index.html",
@@ -692,7 +879,7 @@ test("builds the article at its folder-derived route", () => {
   assert.match(
     articleHtml,
     new RegExp(
-      `<img src="\\./${fingerprintedArticleImageFilename.replaceAll(".", "\\.")}" alt="A little browser lifting weights">`,
+      `<img src="\\./${getResponsiveArticleImageFilename(1120, "png").replaceAll(".", "\\.")}"[^>]*alt="A little browser lifting weights">`,
     ),
   );
   assert.match(articleHtml, /<h2>URLs<\/h2>/);

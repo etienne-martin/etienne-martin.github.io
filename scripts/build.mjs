@@ -11,11 +11,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
+import sharp from "sharp";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const rootDirectory = path.resolve(path.dirname(scriptPath), "..");
 const contentDirectory = path.join(rootDirectory, "content");
 const outputDirectory = path.join(rootDirectory, "dist");
+const responsiveImageWidths = [320, 640, 1120];
 
 const markdown = new MarkdownIt({
   html: false,
@@ -207,6 +209,10 @@ function renderInline(tokens, environment) {
       case "image": {
         const source = token.attrGet("src") ?? "";
         const resolvedSource = resolveAssetUrl(source, environment);
+        const responsiveImage =
+          typeof environment?.resolveImageAsset === "function"
+            ? environment.resolveImageAsset(source)
+            : null;
         const alt = token.content || source;
         const title = token.attrGet("title");
         const titleAttribute = title
@@ -215,7 +221,20 @@ function renderInline(tokens, environment) {
         const escapedSource = escapeAttribute(source);
         const escapedResolvedSource = escapeAttribute(resolvedSource);
         const escapedAlt = escapeAttribute(alt);
-        output += `<span class="md-image" data-alt="${escapedAlt}" data-src="${escapedSource}"><br><img src="${escapedResolvedSource}" alt="${escapedAlt}"${titleAttribute}></span>`;
+
+        if (responsiveImage) {
+          const escapedResponsiveSource = escapeAttribute(responsiveImage.src);
+          const escapedSrcset = escapeAttribute(responsiveImage.srcset);
+          const sources = responsiveImage.sources
+            .map(
+              ({ type, srcset }) =>
+                `<source type="${escapeAttribute(type)}" srcset="${escapeAttribute(srcset)}">`,
+            )
+            .join("");
+          output += `<span class="md-image" data-alt="${escapedAlt}" data-src="${escapedSource}"><br><picture>${sources}<img src="${escapedResponsiveSource}" srcset="${escapedSrcset}" width="${responsiveImage.width}" height="${responsiveImage.height}" alt="${escapedAlt}"${titleAttribute}></picture></span>`;
+        } else {
+          output += `<span class="md-image" data-alt="${escapedAlt}" data-src="${escapedSource}"><br><img src="${escapedResolvedSource}" alt="${escapedAlt}"${titleAttribute}></span>`;
+        }
         break;
       }
       default:
@@ -372,6 +391,13 @@ function renderHtml(
   const socialType = page.route.startsWith("/writing/")
     ? "article"
     : "website";
+  const navigation =
+    page.route === "/"
+      ? ""
+      : `      <nav class="site-navigation" aria-label="Site">
+${renderMarkdown("[Home](/)\n").trimEnd()}
+      </nav>
+`;
 
   return `<!doctype html>
 <html lang="${lang}">
@@ -393,7 +419,7 @@ function renderHtml(
   </head>
   <body>
     <main>
-      <article>
+${navigation}      <article>
 ${content.trimEnd()}
       </article>
     </main>
@@ -448,57 +474,216 @@ function fingerprintRelativePath(relativePath, contents) {
   );
 }
 
-export function createPageAssetResolver(page, assetsBySourcePath) {
+function getPageAssetReference(page, assetsBySourcePath, url) {
+  if (
+    typeof url !== "string" ||
+    url === "" ||
+    /^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\?)/iu.test(url)
+  ) {
+    return null;
+  }
+
   const pageSourceDirectory = path.dirname(page.sourcePath);
   const pageRelativeDirectory = path.relative(
     contentDirectory,
     pageSourceDirectory,
   );
+  const suffixIndex = url.search(/[?#]/u);
+  const authoredPath = suffixIndex === -1 ? url : url.slice(0, suffixIndex);
+  const suffix = suffixIndex === -1 ? "" : url.slice(suffixIndex);
+  let decodedPath;
 
+  try {
+    decodedPath = decodeURIComponent(authoredPath);
+  } catch {
+    return null;
+  }
+
+  const rootRelative = decodedPath.startsWith("/");
+  const sourcePath = rootRelative
+    ? path.resolve(contentDirectory, decodedPath.slice(1))
+    : path.resolve(pageSourceDirectory, decodedPath);
+  const asset = assetsBySourcePath.get(sourcePath);
+
+  if (!asset) {
+    return null;
+  }
+
+  return {
+    asset,
+    pageRelativeDirectory,
+    rootRelative,
+    suffix,
+  };
+}
+
+function resolvePageAssetReference(reference, relativePath) {
+  if (reference.rootRelative) {
+    return `/${encodeUrlPath(relativePath)}${reference.suffix}`;
+  }
+
+  const relativeUrlPath = path.relative(
+    reference.pageRelativeDirectory,
+    relativePath,
+  );
+  const encodedPath = encodeUrlPath(relativeUrlPath);
+  const resolvedPath = encodedPath.startsWith(".")
+    ? encodedPath
+    : `./${encodedPath}`;
+
+  return `${resolvedPath}${reference.suffix}`;
+}
+
+export function createPageAssetResolver(page, assetsBySourcePath) {
   return (url) => {
-    if (
-      typeof url !== "string" ||
-      url === "" ||
-      /^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\?)/iu.test(url)
-    ) {
-      return url;
+    const reference = getPageAssetReference(page, assetsBySourcePath, url);
+
+    return reference
+      ? resolvePageAssetReference(
+          reference,
+          reference.asset.fingerprintedRelativePath,
+        )
+      : url;
+  };
+}
+
+export function createPageImageResolver(page, assetsBySourcePath) {
+  return (url) => {
+    const reference = getPageAssetReference(page, assetsBySourcePath, url);
+    const responsiveImage = reference?.asset.responsiveImage;
+
+    if (!reference || !responsiveImage) {
+      return null;
     }
 
-    const suffixIndex = url.search(/[?#]/u);
-    const authoredPath = suffixIndex === -1 ? url : url.slice(0, suffixIndex);
-    const suffix = suffixIndex === -1 ? "" : url.slice(suffixIndex);
-    let decodedPath;
-
-    try {
-      decodedPath = decodeURIComponent(authoredPath);
-    } catch {
-      return url;
-    }
-
-    const rootRelative = decodedPath.startsWith("/");
-    const sourcePath = rootRelative
-      ? path.resolve(contentDirectory, decodedPath.slice(1))
-      : path.resolve(pageSourceDirectory, decodedPath);
-    const asset = assetsBySourcePath.get(sourcePath);
-
-    if (!asset) {
-      return url;
-    }
-
-    if (rootRelative) {
-      return `/${encodeUrlPath(asset.fingerprintedRelativePath)}${suffix}`;
-    }
-
-    const relativePath = path.relative(
-      pageRelativeDirectory,
-      asset.fingerprintedRelativePath,
+    const variantsByFormat = Map.groupBy(
+      responsiveImage.variants,
+      (variant) => variant.format,
     );
-    const encodedPath = encodeUrlPath(relativePath);
-    const resolvedPath = encodedPath.startsWith(".")
-      ? encodedPath
-      : `./${encodedPath}`;
+    const fallbackVariants = variantsByFormat.get("png") ?? [];
+    const webpVariants = variantsByFormat.get("webp") ?? [];
 
-    return `${resolvedPath}${suffix}`;
+    if (fallbackVariants.length === 0 || webpVariants.length === 0) {
+      return null;
+    }
+
+    const createSrcset = (variants) =>
+      variants
+        .map(
+          (variant) =>
+            `${resolvePageAssetReference(reference, variant.relativePath)} ${variant.width}w`,
+        )
+        .join(", ");
+    const largestFallback = fallbackVariants.at(-1);
+
+    return {
+      height: responsiveImage.height,
+      sources: [
+        {
+          srcset: createSrcset(webpVariants),
+          type: "image/webp",
+        },
+      ],
+      src: resolvePageAssetReference(
+        reference,
+        largestFallback.relativePath,
+      ),
+      srcset: createSrcset(fallbackVariants),
+      width: responsiveImage.width,
+    };
+  };
+}
+
+function getResponsiveImageRelativePath(
+  relativePath,
+  width,
+  format,
+  contents,
+) {
+  const extension = path.extname(relativePath);
+  const basename = path.basename(relativePath, extension);
+  const filename = getFingerprintedFilename(
+    `${basename}-${width}w.${format}`,
+    contents,
+  );
+
+  return path.join(path.dirname(relativePath), filename);
+}
+
+async function createResponsiveImage(relativePath, contents) {
+  if (path.extname(relativePath).toLowerCase() !== ".png") {
+    return null;
+  }
+
+  const metadata = await sharp(contents).metadata();
+
+  if (
+    !metadata.width ||
+    !metadata.height ||
+    (metadata.pages ?? 1) > 1
+  ) {
+    return null;
+  }
+
+  const widths = responsiveImageWidths.filter(
+    (width) => width <= metadata.width,
+  );
+  const largestTargetWidth = responsiveImageWidths.at(-1);
+
+  if (
+    metadata.width < largestTargetWidth &&
+    !widths.includes(metadata.width)
+  ) {
+    widths.push(metadata.width);
+  }
+
+  if (widths.length === 0) {
+    widths.push(metadata.width);
+  }
+
+  const variants = (
+    await Promise.all(
+      widths.flatMap((width) => [
+        sharp(contents)
+          .resize({ width, withoutEnlargement: true })
+          .keepIccProfile()
+          .png({ compressionLevel: 9, effort: 10 })
+          .toBuffer()
+          .then((variantContents) => ({
+            contents: variantContents,
+            format: "png",
+            relativePath: getResponsiveImageRelativePath(
+              relativePath,
+              width,
+              "png",
+              variantContents,
+            ),
+            width,
+          })),
+        sharp(contents)
+          .resize({ width, withoutEnlargement: true })
+          .keepIccProfile()
+          .webp({ effort: 5, quality: 82, smartSubsample: true })
+          .toBuffer()
+          .then((variantContents) => ({
+            contents: variantContents,
+            format: "webp",
+            relativePath: getResponsiveImageRelativePath(
+              relativePath,
+              width,
+              "webp",
+              variantContents,
+            ),
+            width,
+          })),
+      ]),
+    )
+  ).sort((left, right) => left.width - right.width);
+
+  return {
+    height: metadata.height,
+    variants,
+    width: metadata.width,
   };
 }
 
@@ -528,6 +713,13 @@ export function validateAssetOutputPaths(assets, reservedOutputs = []) {
       asset.fingerprintedRelativePath,
     ]) {
       claimOutputPath(outputPath, asset.sourcePath);
+    }
+
+    for (const variant of asset.responsiveImage?.variants ?? []) {
+      claimOutputPath(
+        variant.relativePath,
+        `generated ${variant.width}w ${variant.format} from ${asset.sourcePath}`,
+      );
     }
   }
 }
@@ -584,6 +776,10 @@ export async function build({ silent = false } = {}) {
       .map(async (sourcePath) => {
         const contents = await readFile(sourcePath);
         const relativePath = path.relative(contentDirectory, sourcePath);
+        const responsiveImage = await createResponsiveImage(
+          relativePath,
+          contents,
+        );
 
         return {
           contents,
@@ -592,6 +788,7 @@ export async function build({ silent = false } = {}) {
             contents,
           ),
           relativePath,
+          responsiveImage,
           sourcePath,
         };
       }),
@@ -644,6 +841,12 @@ export async function build({ silent = false } = {}) {
       await Promise.all([
         copyFile(asset.sourcePath, authoredDestinationPath),
         writeFile(fingerprintedDestinationPath, asset.contents),
+        ...(asset.responsiveImage?.variants ?? []).map((variant) =>
+          writeFile(
+            path.join(outputDirectory, variant.relativePath),
+            variant.contents,
+          ),
+        ),
       ]);
     }),
   );
@@ -651,6 +854,10 @@ export async function build({ silent = false } = {}) {
     pages.map(async (page) => {
       const content = renderMarkdown(page.source, {
         resolveAssetUrl: createPageAssetResolver(page, assetsBySourcePath),
+        resolveImageAsset: createPageImageResolver(
+          page,
+          assetsBySourcePath,
+        ),
       });
       const html = renderHtml(
         config,
