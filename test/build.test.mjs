@@ -609,6 +609,74 @@ test("preserves authored unordered and ordered list markers", () => {
   );
 });
 
+test("keeps wide tables scrollable without widening the page", () => {
+  const fixture = renderMarkdown(
+    "| Column | Value |\n| --- | --- |\n| Table | Cell |\n",
+  );
+  const tableRule = styles.match(/^table\s*{[^}]*}/ms)?.[0];
+  const tableScrollRule = styles.match(
+    /^\.md-table-scroll\s*{[^}]*}/ms,
+  )?.[0];
+  const tableCellRule = styles.match(/th,\s*td\s*{[^}]*}/s)?.[0];
+  const leadingPipeRule = styles.match(
+    /\.md-table-scroll th::before,\s*\.md-table-scroll td::before\s*{[^}]*}/s,
+  )?.[0];
+  const trailingPipeRule = styles.match(
+    /\.md-table-scroll th:last-child::after,\s*\.md-table-scroll td:last-child::after\s*{[^}]*}/s,
+  )?.[0];
+  const tableHeaderRule = styles.match(
+    /\.md-table-scroll thead th\s*{[^}]*}/s,
+  )?.[0];
+  const tableHtml = fixture.match(/<table>[\s\S]*<\/table>/u)?.[0];
+
+  assert.match(fixture, /<div class="md-table-scroll"><table>/);
+  assert.match(fixture, /<\/table>\s*<\/div>/);
+  assert.match(tableHtml, /<thead>/u);
+  assert.match(tableHtml, /<tbody>/u);
+  assert.match(tableHtml, /<tr>/u);
+  assert.match(tableHtml, /<th>Column<\/th>/u);
+  assert.match(tableHtml, /<td>Table<\/td>/u);
+  assert.doesNotMatch(tableHtml, /<span\b|[|+]/u);
+  assert.match(tableRule, /margin-inline: 0;/);
+  assert.match(tableRule, /border-collapse: separate;/);
+  assert.match(tableRule, /border-spacing: 0;/);
+  assert.doesNotMatch(tableRule, /display:/);
+  assert.match(tableScrollRule, /width: 100vw;/);
+  assert.match(tableScrollRule, /max-width: none;/);
+  assert.match(
+    tableScrollRule,
+    /margin-inline-start: calc\(0px - var\(--page-gutter\)\);/,
+  );
+  assert.match(
+    tableScrollRule,
+    /padding-inline-start: var\(--page-gutter\);/,
+  );
+  assert.match(tableScrollRule, /padding-inline-end: var\(--page-gutter\);/);
+  assert.match(tableScrollRule, /overflow-x: auto;/);
+  assert.match(tableScrollRule, /overflow-y: hidden;/);
+  assert.match(tableScrollRule, /overscroll-behavior-inline: contain;/);
+  assert.match(tableCellRule, /position: relative;/);
+  assert.match(tableCellRule, /padding-inline: 2ch;/);
+  assert.match(tableCellRule, /text-align: left !important;/);
+  assert.match(tableCellRule, /vertical-align: top;/);
+  assert.doesNotMatch(tableCellRule, /white-space: nowrap;/);
+  assert.match(leadingPipeRule, /content: "\| " \/ "";/);
+  assert.match(leadingPipeRule, /font-weight: 400;/);
+  assert.match(leadingPipeRule, /pointer-events: none;/);
+  assert.match(trailingPipeRule, /content: " \|" \/ "";/);
+  assert.match(trailingPipeRule, /font-weight: 400;/);
+  assert.match(trailingPipeRule, /pointer-events: none;/);
+  assert.match(
+    tableHeaderRule,
+    /border-block-end: 1px dashed var\(--muted\);/,
+  );
+  assert.match(
+    styles,
+    /\.md-table-scroll th::before,[\s\S]*?\.site-footer hr::before\s*{[^}]*user-select: none;/s,
+  );
+  assert.match(styles, /article th\s*{\s*white-space: nowrap;\s*}/s);
+});
+
 test("styles semantic elements as raw Markdown", () => {
   const htmlRule = styles.match(/html\s*{[^}]*}/s)?.[0];
   const codeFontRule = styles.match(
@@ -778,19 +846,20 @@ test("owns the page gutter at the layout level", () => {
     ),
   ].map(([, selector]) => selector.trim());
 
-  assert.match(fixture, /<table>/);
+  assert.match(fixture, /<div class="md-table-scroll"><table>/);
   assert.match(fixture, /<blockquote>/);
   assert.deepEqual(pageGutterSelectors, [
     "body",
+    ".md-table-scroll",
     ".md-code-block",
     ".md-code-block code",
   ]);
-  assert.equal(styles.match(/width:\s*100vw;/g)?.length, 1);
+  assert.equal(styles.match(/width:\s*100vw;/g)?.length, 2);
   assert.equal(
     styles.match(
       /margin-inline-start:\s*calc\(0px - var\(--page-gutter\)\);/g,
     )?.length,
-    1,
+    2,
   );
   assert.doesNotMatch(styles, /article\s*>/);
 });

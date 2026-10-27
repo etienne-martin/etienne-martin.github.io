@@ -263,6 +263,17 @@ markdown.renderer.rules.ordered_list_open = (tokens, index) => {
   return `<ol${startAttribute} data-delimiter="${delimiter}" style="--markdown-list-start: ${safeStart - 1}">\n`;
 };
 
+markdown.renderer.rules.table_open = (tokens, index, options, _environment, renderer) =>
+  `<div class="md-table-scroll">${renderer.renderToken(tokens, index, options)}`;
+
+markdown.renderer.rules.table_close = (
+  tokens,
+  index,
+  options,
+  _environment,
+  renderer,
+) => `${renderer.renderToken(tokens, index, options)}</div>\n`;
+
 markdown.renderer.rules.fence = (tokens, index) => {
   const token = tokens[index];
   const fence = token.markup || "```";

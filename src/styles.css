@@ -91,6 +91,10 @@ blockquote::before,
 .md-inline-code::after,
 .md-code-block::before,
 .md-code-block::after,
+.md-table-scroll th::before,
+.md-table-scroll td::before,
+.md-table-scroll th:last-child::after,
+.md-table-scroll td:last-child::after,
 .site-footer hr::before {
   color: var(--muted);
   cursor: default;
@@ -190,6 +194,61 @@ blockquote::before {
   position: absolute;
   left: 0;
   content: "> " / "";
+}
+
+table {
+  margin-inline: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.md-table-scroll {
+  width: 100vw;
+  max-width: none;
+  margin-block: 0;
+  margin-inline-start: calc(0px - var(--page-gutter));
+  margin-inline-end: 0;
+  padding-inline-start: var(--page-gutter);
+  padding-inline-end: var(--page-gutter);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+}
+
+th,
+td {
+  position: relative;
+  padding-inline: 2ch;
+  text-align: left !important;
+  vertical-align: top;
+}
+
+.md-table-scroll th::before,
+.md-table-scroll td::before {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  content: "| " / "";
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.md-table-scroll th:last-child::after,
+.md-table-scroll td:last-child::after {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  content: " |" / "";
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.md-table-scroll thead th {
+  border-block-end: 1px dashed var(--muted);
+}
+
+article th {
+  white-space: nowrap;
 }
 
 .md-em {

@@ -6,6 +6,7 @@ I’m the co-founder and CTO of [Sudden Technologies](https://sudden.network/), 
 
 ## Writing
 
+- [One Query Too Many](/writing/one-query-too-many/)
 - [Let the Browser Do It for You](/writing/let-the-browser-do-it-for-you/)
 
 ## Links
