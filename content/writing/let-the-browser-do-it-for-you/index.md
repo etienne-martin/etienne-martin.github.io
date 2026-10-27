@@ -2,7 +2,7 @@
 
 *February 18, 2022*
 
-![A little browser lifting weights](./browser.png)
+![Four abstract geometric studies in off-white, gray, and coral](./browser.png)
 
 Browsers are an incredible feat of engineering. Chromium alone contains [tens of millions of lines of source code](<https://en.wikipedia.org/wiki/Chromium_(web_browser)>), and I still find it remarkable that browsers work at all.
 

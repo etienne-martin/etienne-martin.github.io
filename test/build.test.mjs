@@ -211,7 +211,7 @@ test("fingerprints generated assets from their contents", () => {
   assert.match(
     articleHtml,
     new RegExp(
-      `<span class="md-image" data-alt="A little browser lifting weights" data-src="\\./browser\\.png"><br><picture><source type="image/webp"`,
+      `<span class="md-image" data-alt="Four abstract geometric studies in off-white, gray, and coral" data-src="\\./browser\\.png"><br><picture><source type="image/webp"`,
     ),
   );
 });
@@ -452,7 +452,7 @@ test("renders responsive local images with srcset", () => {
   );
   assert.ok(
     articleHtml.includes(
-      `<img src="./${getResponsiveArticleImageFilename(1120, "png")}" srcset="${pngSrcset}" width="2388" height="1668" alt="A little browser lifting weights">`,
+      `<img src="./${getResponsiveArticleImageFilename(1120, "png")}" srcset="${pngSrcset}" width="2388" height="1668" alt="Four abstract geometric studies in off-white, gray, and coral">`,
     ),
   );
   assert.doesNotMatch(articleHtml, /\ssizes=/u);
@@ -678,6 +678,8 @@ test("keeps wide tables scrollable without widening the page", () => {
 });
 
 test("styles semantic elements as raw Markdown", () => {
+  assert.match(styles, /--selection: #ff7b72;/);
+
   const htmlRule = styles.match(/html\s*{[^}]*}/s)?.[0];
   const codeFontRule = styles.match(
     /\.md-inline-code,\s*\.md-code-block,\s*\.md-code-block code\s*{[^}]*}/s,
@@ -948,7 +950,7 @@ test("builds the article at its folder-derived route", () => {
   assert.match(
     articleHtml,
     new RegExp(
-      `<img src="\\./${getResponsiveArticleImageFilename(1120, "png").replaceAll(".", "\\.")}"[^>]*alt="A little browser lifting weights">`,
+      `<img src="\\./${getResponsiveArticleImageFilename(1120, "png").replaceAll(".", "\\.")}"[^>]*alt="Four abstract geometric studies in off-white, gray, and coral">`,
     ),
   );
   assert.match(articleHtml, /<h2>URLs<\/h2>/);
