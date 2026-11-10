@@ -1,3 +1,7 @@
+---
+description: The cost of reading configuration from a database on every request.
+---
+
 # One Query Too Many
 
 *October 26, 2026*

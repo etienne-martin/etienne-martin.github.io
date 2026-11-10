@@ -1,3 +1,7 @@
+---
+description: Before writing another helper or installing another package, check what the browser already knows how to do.
+---
+
 # Let the Browser Do It for You
 
 *February 18, 2022*

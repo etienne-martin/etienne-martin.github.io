@@ -18,6 +18,18 @@ const rootDirectory = path.resolve(path.dirname(scriptPath), "..");
 const contentDirectory = path.join(rootDirectory, "content");
 const outputDirectory = path.join(rootDirectory, "dist");
 const responsiveImageWidths = [320, 640, 1120];
+const socialImageWidth = 1200;
+const socialImageHeight = 630;
+const socialImageBackground = "#202024";
+const supportedImageExtensions = new Set([
+  ".avif",
+  ".gif",
+  ".jpeg",
+  ".jpg",
+  ".png",
+  ".svg",
+  ".webp",
+]);
 
 const markdown = new MarkdownIt({
   html: false,
@@ -301,6 +313,94 @@ export function renderMarkdown(source, environment = {}) {
   return markdown.render(source, environment);
 }
 
+function parseFrontMatterValue(value, sourcePath, lineNumber) {
+  if (value.startsWith('"')) {
+    try {
+      const parsed = JSON.parse(value);
+
+      if (typeof parsed !== "string") {
+        throw new TypeError("value must be a string");
+      }
+
+      return parsed;
+    } catch (error) {
+      throw new Error(
+        `Invalid quoted front matter value in ${sourcePath}:${lineNumber}: ${error.message}`,
+      );
+    }
+  }
+
+  if (value.startsWith("'")) {
+    if (!value.endsWith("'") || value.length < 2) {
+      throw new Error(
+        `Invalid quoted front matter value in ${sourcePath}:${lineNumber}`,
+      );
+    }
+
+    return value.slice(1, -1).replaceAll("''", "'");
+  }
+
+  return value;
+}
+
+export function parseFrontMatter(source, sourcePath = "Markdown source") {
+  const opening = source.match(/^(?:\uFEFF)?---[ \t]*(?:\r?\n|$)/u);
+
+  if (!opening) {
+    return {
+      body: source,
+      frontMatter: {},
+      hasFrontMatter: false,
+    };
+  }
+
+  const closingPattern = /^---[ \t]*(?:\r?\n|$)/gmu;
+  closingPattern.lastIndex = opening[0].length;
+  const closing = closingPattern.exec(source);
+
+  if (!closing) {
+    throw new Error(`Unclosed front matter in ${sourcePath}`);
+  }
+
+  const frontMatterSource = source.slice(opening[0].length, closing.index);
+  const frontMatter = {};
+
+  for (const [index, line] of frontMatterSource.split(/\r?\n/u).entries()) {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) {
+      continue;
+    }
+
+    const match = line.match(/^([A-Za-z][A-Za-z0-9_-]*):[ \t]*(.*)$/u);
+    const lineNumber = index + 2;
+
+    if (!match) {
+      throw new Error(
+        `Invalid front matter in ${sourcePath}:${lineNumber}; expected "key: value"`,
+      );
+    }
+
+    const [, key, rawValue] = match;
+
+    if (Object.hasOwn(frontMatter, key)) {
+      throw new Error(
+        `Duplicate front matter field "${key}" in ${sourcePath}:${lineNumber}`,
+      );
+    }
+
+    frontMatter[key] = parseFrontMatterValue(
+      rawValue.trim(),
+      sourcePath,
+      lineNumber,
+    );
+  }
+
+  return {
+    body: source.slice(closing.index + closing[0].length),
+    frontMatter,
+    hasFrontMatter: true,
+  };
+}
+
 export function getFingerprintedFilename(filename, contents) {
   const extension = path.extname(filename);
   const basename = path.basename(filename, extension);
@@ -346,36 +446,23 @@ function getPageTitle(source, fallbackTitle) {
   return fallbackTitle;
 }
 
-function getPageDescription(source, fallbackDescription) {
-  const tokens = markdown.parse(source, {});
+export function validateArticleMetadata(page) {
+  const sourceLabel = path.relative(rootDirectory, page.sourcePath);
+  const description = page.frontMatter.description;
 
-  for (let index = 0; index < tokens.length - 1; index += 1) {
-    if (tokens[index].type !== "paragraph_open") {
-      continue;
-    }
-
-    const inlineToken = tokens[index + 1];
-
-    if (inlineToken?.type !== "inline") {
-      continue;
-    }
-
-    const children = inlineToken.children ?? [];
-
-    if (children.some((token) => token.type === "image")) {
-      continue;
-    }
-
-    const description = inlineText(children).trim().replace(/\s+/g, " ");
-
-    if (description.length >= 40) {
-      return description.length > 160
-        ? `${description.slice(0, 157).trimEnd()}…`
-        : description;
-    }
+  if (
+    !page.hasFrontMatter ||
+    typeof description !== "string" ||
+    description.trim() === ""
+  ) {
+    throw new Error(
+      `${sourceLabel} must contain a non-empty front matter description`,
+    );
   }
 
-  return fallbackDescription;
+  if (!getPageTitle(page.source, "")) {
+    throw new Error(`${sourceLabel} must contain a non-empty H1 title`);
+  }
 }
 
 function renderHtml(
@@ -385,14 +472,15 @@ function renderHtml(
   copyrightYear,
   stylesheetHref,
   faviconHref,
+  socialImage,
 ) {
   const pageTitle = getPageTitle(page.source, config.title);
   const documentTitle =
     page.route === "/" ? pageTitle : `${pageTitle} — ${config.title}`;
   const description = escapeAttribute(
-    page.route === "/"
-      ? config.description
-      : getPageDescription(page.source, config.description),
+    page.route.startsWith("/writing/")
+      ? page.frontMatter.description.trim()
+      : config.description,
   );
   const title = escapeAttribute(documentTitle);
   const socialTitle = escapeAttribute(pageTitle);
@@ -402,6 +490,27 @@ function renderHtml(
   const socialType = page.route.startsWith("/writing/")
     ? "article"
     : "website";
+  const twitterCard = socialImage ? "summary_large_image" : "summary";
+  const socialImageUrl = socialImage
+    ? escapeAttribute(socialImage.url)
+    : null;
+  const socialImageAlt = socialImage
+    ? escapeAttribute(socialImage.alt)
+    : null;
+  const openGraphImageMetadata = socialImage
+    ? `
+    <meta property="og:image" content="${socialImageUrl}">
+    <meta property="og:image:secure_url" content="${socialImageUrl}">
+    <meta property="og:image:type" content="${escapeAttribute(socialImage.type)}">
+    <meta property="og:image:width" content="${socialImage.width}">
+    <meta property="og:image:height" content="${socialImage.height}">
+    <meta property="og:image:alt" content="${socialImageAlt}">`
+    : "";
+  const twitterImageMetadata = socialImage
+    ? `
+    <meta name="twitter:image" content="${socialImageUrl}">
+    <meta name="twitter:image:alt" content="${socialImageAlt}">`
+    : "";
   const navigation =
     page.route === "/"
       ? ""
@@ -422,7 +531,10 @@ ${renderMarkdown("[Home](/)\n").trimEnd()}
     <meta property="og:title" content="${socialTitle}">
     <meta property="og:description" content="${description}">
     <meta property="og:url" content="${pageUrl}">
-    <meta property="og:site_name" content="${siteTitle}">
+    <meta property="og:site_name" content="${siteTitle}">${openGraphImageMetadata}
+    <meta name="twitter:card" content="${twitterCard}">
+    <meta name="twitter:title" content="${socialTitle}">
+    <meta name="twitter:description" content="${description}">${twitterImageMetadata}
     <title>${title}</title>
     <link rel="canonical" href="${pageUrl}">
     <link rel="icon" href="${faviconHref}" type="image/svg+xml">
@@ -605,6 +717,69 @@ export function createPageImageResolver(page, assetsBySourcePath) {
   };
 }
 
+function collectImageTokens(tokens, imageTokens = []) {
+  for (const token of tokens) {
+    if (token.type === "image") {
+      imageTokens.push(token);
+    }
+
+    if (Array.isArray(token.children)) {
+      collectImageTokens(token.children, imageTokens);
+    }
+  }
+
+  return imageTokens;
+}
+
+export function getArticleSocialImage(page, assetsBySourcePath, siteUrl) {
+  const sourceLabel = path.relative(rootDirectory, page.sourcePath);
+  const imageTokens = collectImageTokens(markdown.parse(page.source, {}));
+
+  for (const token of imageTokens) {
+    const source = token.attrGet("src") ?? "";
+    const reference = getPageAssetReference(
+      page,
+      assetsBySourcePath,
+      source,
+    );
+
+    if (!reference) {
+      continue;
+    }
+
+    const alt = token.content.trim();
+
+    if (!alt) {
+      throw new Error(
+        `${sourceLabel} must give its social sharing image non-empty alt text`,
+      );
+    }
+
+    const socialImage = reference.asset.socialImage;
+
+    if (!socialImage) {
+      throw new Error(
+        `${sourceLabel} social sharing image must use a supported image format`,
+      );
+    }
+
+    return {
+      alt,
+      height: socialImage.height,
+      type: socialImage.type,
+      url: new URL(
+        `/${encodeUrlPath(socialImage.relativePath)}`,
+        siteUrl,
+      ).href,
+      width: socialImage.width,
+    };
+  }
+
+  throw new Error(
+    `${sourceLabel} must contain a local image for social sharing`,
+  );
+}
+
 function getResponsiveImageRelativePath(
   relativePath,
   width,
@@ -619,6 +794,41 @@ function getResponsiveImageRelativePath(
   );
 
   return path.join(path.dirname(relativePath), filename);
+}
+
+function getSocialImageRelativePath(relativePath, contents) {
+  const extension = path.extname(relativePath);
+  const basename = path.basename(relativePath, extension);
+
+  return path.join(
+    path.dirname(relativePath),
+    getFingerprintedFilename(`${basename}-social.png`, contents),
+  );
+}
+
+async function createSocialImage(relativePath, contents) {
+  if (!supportedImageExtensions.has(path.extname(relativePath).toLowerCase())) {
+    return null;
+  }
+
+  const socialContents = await sharp(contents, { animated: false })
+    .resize({
+      background: socialImageBackground,
+      fit: "contain",
+      height: socialImageHeight,
+      width: socialImageWidth,
+    })
+    .flatten({ background: socialImageBackground })
+    .png({ compressionLevel: 9, effort: 10 })
+    .toBuffer();
+
+  return {
+    contents: socialContents,
+    height: socialImageHeight,
+    relativePath: getSocialImageRelativePath(relativePath, socialContents),
+    type: "image/png",
+    width: socialImageWidth,
+  };
 }
 
 async function createResponsiveImage(relativePath, contents) {
@@ -732,23 +942,42 @@ export function validateAssetOutputPaths(assets, reservedOutputs = []) {
         `generated ${variant.width}w ${variant.format} from ${asset.sourcePath}`,
       );
     }
+
+    if (asset.socialImage) {
+      claimOutputPath(
+        asset.socialImage.relativePath,
+        `generated social image from ${asset.sourcePath}`,
+      );
+    }
   }
 }
 
-function pageFromSourcePath(sourcePath, source) {
+function pageFromSourcePath(sourcePath, rawSource) {
   const relativePath = path.relative(contentDirectory, sourcePath);
   const relativeDirectory = path.dirname(relativePath);
   const routeDirectory = relativeDirectory === "." ? "" : relativeDirectory;
   const route = routeDirectory
     ? `/${routeDirectory.split(path.sep).join("/")}/`
     : "/";
-
-  return {
+  const { body, frontMatter, hasFrontMatter } = parseFrontMatter(
+    rawSource,
+    relativePath,
+  );
+  const page = {
+    frontMatter,
+    hasFrontMatter,
     outputDirectory: path.join(outputDirectory, routeDirectory),
+    rawSource,
     route,
-    source,
+    source: body,
     sourcePath,
   };
+
+  if (route.startsWith("/writing/")) {
+    validateArticleMetadata(page);
+  }
+
+  return page;
 }
 
 export async function build({ silent = false } = {}) {
@@ -787,10 +1016,10 @@ export async function build({ silent = false } = {}) {
       .map(async (sourcePath) => {
         const contents = await readFile(sourcePath);
         const relativePath = path.relative(contentDirectory, sourcePath);
-        const responsiveImage = await createResponsiveImage(
-          relativePath,
-          contents,
-        );
+        const [responsiveImage, socialImage] = await Promise.all([
+          createResponsiveImage(relativePath, contents),
+          createSocialImage(relativePath, contents),
+        ]);
 
         return {
           contents,
@@ -800,6 +1029,7 @@ export async function build({ silent = false } = {}) {
           ),
           relativePath,
           responsiveImage,
+          socialImage,
           sourcePath,
         };
       }),
@@ -835,6 +1065,14 @@ export async function build({ silent = false } = {}) {
   const assetsBySourcePath = new Map(
     contentAssets.map((asset) => [path.resolve(asset.sourcePath), asset]),
   );
+  const socialImagesByPageSourcePath = new Map(
+    pages.map((page) => [
+      page.sourcePath,
+      page.route.startsWith("/writing/")
+        ? getArticleSocialImage(page, assetsBySourcePath, config.url)
+        : null,
+    ]),
+  );
 
   await rm(outputDirectory, { recursive: true, force: true });
   await mkdir(outputDirectory, { recursive: true });
@@ -858,6 +1096,17 @@ export async function build({ silent = false } = {}) {
             variant.contents,
           ),
         ),
+        ...(asset.socialImage
+          ? [
+              writeFile(
+                path.join(
+                  outputDirectory,
+                  asset.socialImage.relativePath,
+                ),
+                asset.socialImage.contents,
+              ),
+            ]
+          : []),
       ]);
     }),
   );
@@ -877,12 +1126,16 @@ export async function build({ silent = false } = {}) {
         copyrightYear,
         stylesheetHref,
         faviconHref,
+        socialImagesByPageSourcePath.get(page.sourcePath),
       );
 
       await mkdir(page.outputDirectory, { recursive: true });
       await Promise.all([
         writeFile(path.join(page.outputDirectory, "index.html"), html),
-        writeFile(path.join(page.outputDirectory, "index.md"), page.source),
+        writeFile(
+          path.join(page.outputDirectory, "index.md"),
+          page.rawSource,
+        ),
       ]);
     }),
   );

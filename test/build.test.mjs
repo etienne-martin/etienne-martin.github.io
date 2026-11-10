@@ -8,8 +8,11 @@ import {
   build,
   createPageAssetResolver,
   createPageImageResolver,
+  getArticleSocialImage,
   getFingerprintedFilename,
+  parseFrontMatter,
   renderMarkdown,
+  validateArticleMetadata,
   validateAssetOutputPaths,
 } from "../scripts/build.mjs";
 
@@ -36,6 +39,9 @@ const faviconFilename = distFiles.find((file) =>
 const fingerprintedArticleImageFilename = articleDistFiles.find((file) =>
   /^browser\.[a-f0-9]{12}\.png$/u.test(file),
 );
+const socialArticleImageFilename = articleDistFiles.find((file) =>
+  /^browser-social\.[a-f0-9]{12}\.png$/u.test(file),
+);
 const responsiveArticleImageFilenames = articleDistFiles
   .filter((file) =>
     /^browser-(?:320|640|1120)w\.[a-f0-9]{12}\.(?:png|webp)$/u.test(
@@ -47,6 +53,7 @@ const responsiveArticleImageFilenames = articleDistFiles
 assert.ok(stylesheetFilename);
 assert.ok(faviconFilename);
 assert.ok(fingerprintedArticleImageFilename);
+assert.ok(socialArticleImageFilename);
 assert.equal(responsiveArticleImageFilenames.length, 6);
 
 function getResponsiveArticleImageFilename(width, format) {
@@ -62,7 +69,7 @@ function getResponsiveArticleImageFilename(width, format) {
 
 const [
   source,
-  articleSource,
+  articleRawSource,
   html,
   articleHtml,
   styles,
@@ -73,6 +80,7 @@ const [
   emittedFingerprintedArticleImage,
   favicon,
   devSource,
+  socialArticleImage,
 ] = await Promise.all([
   readFile(path.join(rootDirectory, "content/index.md"), "utf8"),
   readFile(path.join(sourceArticleDirectory, "index.md"), "utf8"),
@@ -88,7 +96,18 @@ const [
   ),
   readFile(path.join(rootDirectory, "dist", faviconFilename), "utf8"),
   readFile(path.join(rootDirectory, "scripts/dev.mjs"), "utf8"),
+  readFile(path.join(outputArticleDirectory, socialArticleImageFilename)),
 ]);
+
+const {
+  body: articleSource,
+  frontMatter: articleFrontMatter,
+  hasFrontMatter: articleHasFrontMatter,
+} = parseFrontMatter(
+  articleRawSource,
+  path.join(articlePath, "index.md"),
+);
+const socialArticleImageMetadata = await sharp(socialArticleImage).metadata();
 
 const responsiveArticleImages = await Promise.all(
   responsiveArticleImageFilenames.map(async (filename) => {
@@ -114,13 +133,126 @@ const articleImageAsset = {
       .sort((left, right) => left.width - right.width),
     width: 2388,
   },
+  socialImage: {
+    height: 630,
+    relativePath: path.join(articlePath, socialArticleImageFilename),
+    type: "image/png",
+    width: 1200,
+  },
 };
 const articlePage = {
+  source: articleSource,
   sourcePath: path.join(sourceArticleDirectory, "index.md"),
 };
 const articleAssetsBySourcePath = new Map([
   [path.join(sourceArticleDirectory, "browser.png"), articleImageAsset],
 ]);
+
+test("parses front matter without rendering it as Markdown", () => {
+  assert.equal(articleHasFrontMatter, true);
+  assert.equal(
+    articleFrontMatter.description,
+    "Before writing another helper or installing another package, check what the browser already knows how to do.",
+  );
+  assert.match(articleSource, /^# Let the Browser Do It for You$/mu);
+  assert.doesNotMatch(articleSource, /^---$/mu);
+  assert.doesNotMatch(articleHtml, /<p>description:/u);
+});
+
+test("rejects malformed or duplicate front matter", () => {
+  assert.throws(
+    () => parseFrontMatter("---\ndescription: Missing close\n", "article.md"),
+    /Unclosed front matter in article\.md/u,
+  );
+  assert.throws(
+    () =>
+      parseFrontMatter(
+        "---\ndescription: First\ndescription: Second\n---\n# Title\n",
+        "article.md",
+      ),
+    /Duplicate front matter field "description" in article\.md:3/u,
+  );
+  assert.throws(
+    () =>
+      parseFrontMatter(
+        "---\ndescription without a colon\n---\n# Title\n",
+        "article.md",
+      ),
+    /Invalid front matter in article\.md:2/u,
+  );
+});
+
+test("requires article descriptions and H1 titles", () => {
+  const fixturePath = path.join(
+    rootDirectory,
+    "content/writing/example/index.md",
+  );
+
+  assert.throws(
+    () =>
+      validateArticleMetadata({
+        frontMatter: {},
+        hasFrontMatter: false,
+        source: "# Example\n",
+        sourcePath: fixturePath,
+      }),
+    /must contain a non-empty front matter description/u,
+  );
+  assert.throws(
+    () =>
+      validateArticleMetadata({
+        frontMatter: { description: "   " },
+        hasFrontMatter: true,
+        source: "# Example\n",
+        sourcePath: fixturePath,
+      }),
+    /must contain a non-empty front matter description/u,
+  );
+  assert.throws(
+    () =>
+      validateArticleMetadata({
+        frontMatter: { description: "A useful description." },
+        hasFrontMatter: true,
+        source: "Paragraph only.\n",
+        sourcePath: fixturePath,
+      }),
+    /must contain a non-empty H1 title/u,
+  );
+});
+
+test("requires a local social image with alt text", () => {
+  const socialImage = getArticleSocialImage(
+    articlePage,
+    articleAssetsBySourcePath,
+    "https://etiennemartin.ca/",
+  );
+
+  assert.deepEqual(socialImage, {
+    alt: "Four abstract geometric studies in off-white, gray, and coral",
+    height: 630,
+    type: "image/png",
+    url: `https://etiennemartin.ca/${articlePath}/${socialArticleImageFilename}`,
+    width: 1200,
+  });
+  assert.throws(
+    () =>
+      getArticleSocialImage(
+        { ...articlePage, source: "# Example\n\n![](./browser.png)\n" },
+        articleAssetsBySourcePath,
+        "https://etiennemartin.ca/",
+      ),
+    /must give its social sharing image non-empty alt text/u,
+  );
+  assert.throws(
+    () =>
+      getArticleSocialImage(
+        { ...articlePage, source: "# Example\n\nNo image.\n" },
+        articleAssetsBySourcePath,
+        "https://etiennemartin.ca/",
+      ),
+    /must contain a local image for social sharing/u,
+  );
+});
 
 test("builds every page from its Markdown source", () => {
   assert.ok(html.includes(renderMarkdown(source).trimEnd()));
@@ -241,6 +373,16 @@ test("generates responsive, content-hashed image variants", () => {
     assert.ok(getResponsiveArticleImageFilename(width, "png"));
     assert.ok(getResponsiveArticleImageFilename(width, "webp"));
   }
+});
+
+test("generates a fingerprinted 1200 by 630 social image", () => {
+  assert.equal(socialArticleImageMetadata.format, "png");
+  assert.equal(socialArticleImageMetadata.width, 1200);
+  assert.equal(socialArticleImageMetadata.height, 630);
+  assert.equal(
+    socialArticleImageFilename,
+    getFingerprintedFilename("browser-social.png", socialArticleImage),
+  );
 });
 
 test("renders Markdown with semantic HTML", () => {
@@ -597,6 +739,20 @@ test("rejects content assets that collide with reserved build outputs", () => {
       ]),
     /Build output collision at .*browser\.png/u,
   );
+
+  assert.throws(
+    () =>
+      validateAssetOutputPaths([
+        {
+          ...asset,
+          relativePath: path.join(articlePath, "browser.png"),
+          socialImage: {
+            relativePath: path.join(articlePath, "browser.png"),
+          },
+        },
+      ]),
+    /Build output collision at .*browser\.png/u,
+  );
 });
 
 test("preserves authored unordered and ordered list markers", () => {
@@ -684,6 +840,7 @@ test("styles semantic elements as raw Markdown", () => {
   const codeFontRule = styles.match(
     /\.md-inline-code,\s*\.md-code-block,\s*\.md-code-block code\s*{[^}]*}/s,
   )?.[0];
+  const inlineCodeRule = styles.match(/\.md-inline-code\s*{[^}]*}/s)?.[0];
   const codeBlockRule = styles.match(/\.md-code-block\s*{[^}]*}/s)?.[0];
   const codeContentRule = [
     ...styles.matchAll(/\.md-code-block code\s*{[^}]*}/gs),
@@ -705,6 +862,7 @@ test("styles semantic elements as raw Markdown", () => {
 
   assert.ok(htmlRule);
   assert.ok(codeFontRule);
+  assert.ok(inlineCodeRule);
   assert.ok(codeBlockRule);
   assert.ok(codeContentRule);
   assert.ok(bodyRule);
@@ -750,6 +908,7 @@ test("styles semantic elements as raw Markdown", () => {
   assert.match(htmlRule, /(?:^|\n)\s*-webkit-text-size-adjust:\s*100%;/);
   assert.match(htmlRule, /(?:^|\n)\s*text-size-adjust:\s*100%;/);
   assert.match(codeFontRule, /font:\s*inherit;/);
+  assert.match(inlineCodeRule, /color: var\(--muted\);/);
   assert.match(bodyRule, /padding-block: var\(--page-gutter\);/);
   assert.match(bodyRule, /padding-inline: var\(--page-gutter\);/);
   assert.match(bodyRule, /font-size: 13px;/);
@@ -868,12 +1027,13 @@ test("owns the page gutter at the layout level", () => {
 
 test("emits exact Markdown sources and colocated assets", () => {
   assert.equal(emittedSource, source);
-  assert.equal(emittedArticleSource, articleSource);
+  assert.equal(emittedArticleSource, articleRawSource);
   assert.deepEqual(emittedArticleImage, sourceArticleImage);
   assert.deepEqual(emittedFingerprintedArticleImage, sourceArticleImage);
   assert.deepEqual(articleDistFiles.sort(), [
     ...responsiveArticleImageFilenames,
     fingerprintedArticleImageFilename,
+    socialArticleImageFilename,
     "browser.png",
     "index.html",
     "index.md",
@@ -917,6 +1077,8 @@ test("builds the homepage Writing section and internal article link", () => {
     html,
     /<link rel="canonical" href="https:\/\/etiennemartin\.ca\/">/,
   );
+  assert.match(html, /<meta name="twitter:card" content="summary">/);
+  assert.doesNotMatch(html, /(?:og|twitter):image/u);
   assert.match(html, /<h2>Writing<\/h2>/);
   assert.match(
     html,
@@ -933,11 +1095,29 @@ test("builds the homepage Writing section and internal article link", () => {
 });
 
 test("builds the article at its folder-derived route", () => {
+  const socialImageUrl = `https://etiennemartin.ca/${articlePath}/${socialArticleImageFilename}`;
+  const socialImageAlt =
+    "Four abstract geometric studies in off-white, gray, and coral";
+
   assert.match(
     articleHtml,
     /<title>Let the Browser Do It for You — Etienne Martin<\/title>/,
   );
+  assert.ok(
+    articleHtml.includes(
+      `<meta name="description" content="${articleFrontMatter.description}">`,
+    ),
+  );
   assert.match(articleHtml, /<meta property="og:type" content="article">/);
+  assert.match(
+    articleHtml,
+    /<meta property="og:title" content="Let the Browser Do It for You">/,
+  );
+  assert.ok(
+    articleHtml.includes(
+      `<meta property="og:description" content="${articleFrontMatter.description}">`,
+    ),
+  );
   assert.match(
     articleHtml,
     /<link rel="canonical" href="https:\/\/etiennemartin\.ca\/writing\/let-the-browser-do-it-for-you\/">/,
@@ -946,6 +1126,21 @@ test("builds the article at its folder-derived route", () => {
     articleHtml,
     /<meta property="og:url" content="https:\/\/etiennemartin\.ca\/writing\/let-the-browser-do-it-for-you\/">/,
   );
+  for (const metadata of [
+    `<meta property="og:image" content="${socialImageUrl}">`,
+    `<meta property="og:image:secure_url" content="${socialImageUrl}">`,
+    '<meta property="og:image:type" content="image/png">',
+    '<meta property="og:image:width" content="1200">',
+    '<meta property="og:image:height" content="630">',
+    `<meta property="og:image:alt" content="${socialImageAlt}">`,
+    '<meta name="twitter:card" content="summary_large_image">',
+    '<meta name="twitter:title" content="Let the Browser Do It for You">',
+    `<meta name="twitter:description" content="${articleFrontMatter.description}">`,
+    `<meta name="twitter:image" content="${socialImageUrl}">`,
+    `<meta name="twitter:image:alt" content="${socialImageAlt}">`,
+  ]) {
+    assert.ok(articleHtml.includes(metadata));
+  }
   assert.match(articleHtml, /<h1>Let the Browser Do It for You<\/h1>/);
   assert.match(
     articleHtml,

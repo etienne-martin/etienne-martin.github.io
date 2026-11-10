@@ -281,6 +281,7 @@ article th {
 }
 
 .md-inline-code {
+  color: var(--muted);
   white-space: break-spaces;
 }
 
