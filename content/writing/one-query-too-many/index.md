@@ -16,7 +16,9 @@ We ran into this while building [Sudden](https://sudden.network/), a serverless 
 
 ## The Obvious Place to Start
 
-Our first design was conventional: we stored each customer's configuration in a database, queried it when a request arrived, checked the request against those rules, and continued:
+We already had a database with customer records and the data that went with them. When we added rules for each customer, we put them there too.
+
+When a request arrived, we fetched the customer's rules from the database and checked the request against them before continuing.
 
 ```
 request ──► query database ──► verify customer rules ──► handle request
@@ -24,9 +26,7 @@ request ──► query database ──► verify customer rules ──► handl
 
 It worked. When the configuration grew from one rule set per customer to several independently managed rule sets, the logical model had to change. We added transition logic, migrated the existing records, and verified the backfill.
 
-The database handled that work correctly. But it was our first clue that we were treating release-managed configuration as operational data.
-
-The read path was the bigger problem. Every request incurred a database read and a network round trip before the customer check could finish. AWS reports [single-digit-millisecond average service latency](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TroubleshootingLatency.html) for most single-item DynamoDB operations, before application and network transport. PostgreSQL performance depends on the query and deployment, but the important part is the same: the request has to leave the process and wait for another system.
+The read path was the bigger problem. Every request incurred a database read and a network round trip before the customer check could finish. AWS reports [single-digit-millisecond average service latency](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TroubleshootingLatency.html) for most single-item DynamoDB operations, before application and network transport. PostgreSQL performance depends on the query and deployment. Either way, the request has to leave the process and wait for another system.
 
 At the edge, that round trip defeats much of the point. Putting compute close to the viewer helps little if every request still has to travel back to an AWS Region for the configuration needed to make a decision.
 
@@ -36,7 +36,7 @@ Serverless functions are billed for elapsed execution time while they wait. Each
 
 We next cached each customer's configuration in module-level memory. A warm serverless execution environment could reuse its copy without querying the database.
 
-That made warm requests faster, but it did not create one cache. It created one cache per execution environment. Every cold start still queried the database to fill its own cache, and a traffic spike created more environments and more cache misses just as load increased.
+That made warm requests faster. Each execution environment had its own cache. Every cold start still queried the database to fill its own cache, and a traffic spike created more environments and more cache misses just as load increased.
 
 The caches also filled and expired at different times. After we changed a customer's configuration, one request could reach an environment with the new value and succeed. The next could reach an older environment and fail.
 
@@ -44,11 +44,11 @@ We had replaced one database lookup with a fleet of unrelated clocks.
 
 ## Back to the Drawing Board
 
-The configuration was small, non-secret, changed by engineers, and its updates could wait for a deployment. Customers could not edit it themselves. The system needed infrequent, deliberate updates and extremely frequent reads.
+The configuration was small, non-secret, and changed by engineers. Customers could not edit it themselves. The system needed infrequent, deliberate updates and extremely frequent reads.
 
 The configuration had the shape of data but the lifecycle of code.
 
-The key was not merely to keep that configuration in the codebase. It was to distribute it across the infrastructure. Instead of making every function travel to one centralized copy, we put a copy inside every function that consumes it.
+We put a copy inside every function that consumes it.
 
 ### Before
 
@@ -72,7 +72,7 @@ The repository still has one authoritative source. During a build, the package a
 
 That duplication is intentional. The data lives inside the runtime, next to the code that reads it. There is no database query, cache lookup, connection pool, or network hop for the customer check. When the platform adds more execution environments to handle traffic, every new environment starts with its own copy. The data scales out with the compute.
 
-This becomes especially valuable with edge computing. AWS replicates a [Lambda@Edge function](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions.html) to locations around the world. When the customer configuration ships inside the same artifact, the data travels with the compute. Each edge runtime can make the decision locally instead of reaching back to a regional database.
+AWS replicates a [Lambda@Edge function](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions.html) to locations around the world. When the customer configuration ships inside the same artifact, the data travels with the compute. Each edge runtime can make the decision locally instead of reaching back to a regional database.
 
 ## Updating the Data
 
@@ -84,7 +84,7 @@ edit JSON ──► pull request ──► CI checks ──► deploy
 
 Git is the source of truth, pull requests provide the review workflow, and the deployment pipeline distributes the new version. Each change has an author, review, timestamp, and diff. A malformed customer file or duplicate identifier fails before deployment.
 
-This makes writes slower. A change takes a few minutes to move through CI and deployment. That is acceptable because adding or changing a customer is a deliberate process rather than a self-service action. In exchange, the far more frequent reads become in-memory lookups.
+This makes writes slower. A change takes a few minutes to move through CI and deployment. We can wait that long when an engineer adds a customer or changes its configuration. In exchange, the far more frequent reads become in-memory lookups.
 
 ## Five Milliseconds at Video Scale
 
@@ -96,7 +96,7 @@ Those requests accumulate 50 seconds of serverless function execution time every
 
 At AWS's published `us-east-1` rates, that wait costs about $3 per hour in [serverless function duration](https://aws.amazon.com/lambda/pricing/). The 36 million strongly consistent DynamoDB reads add about $4.50 at [$0.125 per million read request units](https://aws.amazon.com/dynamodb/pricing/).
 
-Cost is not the only limit. DynamoDB documents a maximum of [3,000 read units per second per partition](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html), so 10,000 strongly consistent reads per second to one customer item would throttle. The table isolates the unit economics; making that centralized design work for one concentrated traffic spike would require sharding, caching, or another layer.
+DynamoDB documents a maximum of [3,000 read units per second per partition](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html), so 10,000 strongly consistent reads per second to one customer item would throttle. The table isolates the unit economics; making that centralized design work for one concentrated traffic spike would require sharding, caching, or another layer.
 
 | At 10,000 checks per second | Database lookup | Bundled configuration |
 | --- | ---: | ---: |
@@ -133,6 +133,6 @@ At our current scale, the complete dataset fits comfortably in every artifact an
 
 The database was doing its job. The mistake was treating release-managed configuration as operational data. Optimizing that mismatch led us from a database read to per-runtime caches and inconsistent expiry.
 
-The answer was not a faster database. It was putting the data where it is read. One source in the repository becomes many copies across the infrastructure, each living next to the code that consumes it. New regional or edge compute arrives with the data already inside it.
+One source in the repository becomes many copies across the infrastructure, each living next to the code that consumes it. New regional or edge compute arrives with the data already inside it.
 
-For this workload, the rare write pays for a pull request and deployment. The millions of reads pay for a local memory lookup. Centralize the source of truth, then distribute the read path.
+For this workload, the rare write pays for a pull request and deployment. The millions of reads pay for a local memory lookup.
