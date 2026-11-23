@@ -6,7 +6,7 @@ description: Coding agents now write every line across the platform. Output mult
 
 *November 10, 2026*
 
-![Nested code modules connected by a shared set of architectural rules](./architectural-memory.png)
+![A small robot studies a route on an open map](./architectural-memory.png)
 
 ## The Platform
 
@@ -30,7 +30,7 @@ In March 2026, the *Financial Times* reported that, after a series of major inci
 
 A sign-off rule like that would leave the extra changes waiting for a senior engineer. A change can look perfectly reasonable on its own and still make the codebase a little harder to work in. I used to catch that kind of slop one pull request at a time.
 
-![A robot sends papers faster than one reviewer can read](./review-queue.png)
+![A robot sends a pile of changes down a conveyor toward a lone reviewer](./review-queue.png)
 
 ## The Team Was the Memory
 
@@ -50,7 +50,7 @@ Both agents could see where code lived. The reasons behind our decisions about o
 
 My colleagues remembered those review conversations and applied what they'd learned to the next pull request. Every new agent session began with the same architectural amnesia.
 
-![Two puzzled robots study a blank map and signpost](./blank-map.png)
+![Two robots puzzle over a map beside blank signposts](./blank-map.png)
 
 ## Make the Repository Remember
 
@@ -97,7 +97,7 @@ With an agent, we can get a new rule working during the review that exposed the 
 3. Add a lint rule if the tool can spot the violation in the code.
 4. Fix existing violations before turning on the rule. Check the result in the same pull request.
 
-![One robot files a rule card for the next robot to find](./rule-card.png)
+![One robot files a rule card as another retrieves one](./rule-card.png)
 
 ## When a Rule Goes Stale
 
