@@ -54,15 +54,17 @@ My colleagues remembered those review conversations and applied what they'd lear
 
 ## Make the Repository Remember
 
-We'd worked out those rules over years of conversations and code reviews. Every coding agent starts with the repository, so we began writing the rules down next to the code and automating the checks we could. I call that Architectural Memory.
+We'd worked out those rules over years of conversations and code reviews. Every coding agent starts with the repository, so we began writing down the rules and the reasons behind them next to the code. We automated the checks we could. I call that Architectural Memory.
 
-We use `AGENTS.md` for decisions that require judgment. To decide which module should own a behavior, for example, an agent needs to know who uses it, what its lifecycle is, and why it might change.
+![A robot lounges on an oversized brain shaped like a couch](./brain-couch.png)
+
+An agent can trace a call and see which module owns a behavior today. We use `AGENTS.md` to give it the reasoning it needs for the next decision. If two apps keep similar behavior separate because it changes on different release cycles, that reason helps the agent judge whether to move it into a shared package.
 
 For constraints we can check mechanically in our JavaScript and TypeScript source, we write custom ESLint rules. They enforce ownership boundaries and dependency direction, and can restrict imports to a package's public entry points. When a check fails, the error names the supported path and explains why it's there.
 
 We keep one rule per file. That makes each check easy to review and lets us add or remove rules independently.
 
-![A robot reads a guide beside a road with one branch blocked](./guardrails.png)
+![Seen from behind, a robot checks a foldout map at an unmarked fork](./guardrails.png)
 
 ## Where the Rules Live
 
@@ -86,14 +88,14 @@ For a change in `packages/billing/`, an agent picks up the root, `packages/`, an
 
 This depends on having clear modules in the first place. If presentation, business rules, and infrastructure all live in the same large files, instructions have to cover more code and lint rules need more exceptions.
 
-## When a Review Becomes a Rule
+## When a Decision Becomes a Rule
 
 Boris Cherny, who created Claude Code at Anthropic, used to tally recurring review comments in a spreadsheet. After he'd seen the same problem three or four times, he'd write a lint rule for it. Now, when he spots something “lintable,” he asks Claude Code to [write the rule in that pull request](https://www.youtube.com/watch?v=julbw1JuAz0&t=2718s).
 
-With an agent, we can get a new rule working during the review that exposed the problem.
+With an agent, we can get a new rule working during the review that exposed the problem. A decision worth recording can also come out of planning, design, or implementation. Before I write it down, I ask what the code leaves unexplained and which future decision that explanation would change.
 
-1. Decide whether this is a one-off mistake or whether the design calls for a rule.
-2. Write down the decision in the narrowest relevant `AGENTS.md`.
+1. Decide whether the finding will matter beyond the current change.
+2. Record the decision and its reason in the narrowest relevant `AGENTS.md` as part of the same change.
 3. Add a lint rule if the tool can spot the violation in the code.
 4. Fix existing violations before turning on the rule. Check the result in the same pull request.
 
@@ -109,4 +111,4 @@ I try to keep lint rules narrow, explain how to fix a violation, and write down 
 
 Since we started writing down these rules, agent-written changes have followed the platform's architecture more consistently. The agent writing the code and the one reviewing it start with the same instructions. ESLint catches the violations it can check before anyone reviews the pull request.
 
-When we settle an architectural question in review, I write down the decision where the next agent will look. I want to make that decision once and spend the next review on something new.
+When we settle an architectural question, I put our reasoning where the next agent will look. I want to make that decision once and spend the next review on something new.
