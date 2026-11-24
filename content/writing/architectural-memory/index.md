@@ -64,7 +64,7 @@ For constraints we can check mechanically in our JavaScript and TypeScript sourc
 
 We keep one rule per file. That makes each check easy to review and lets us add or remove rules independently.
 
-![Seen from behind, a robot checks a foldout map at an unmarked fork](./guardrails.png)
+![A robot checks a foldout map whose route matches the signpost’s orange right arrow](./guardrails.png)
 
 ## Where the Rules Live
 
