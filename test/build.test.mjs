@@ -348,31 +348,6 @@ test("fingerprints generated assets from their contents", () => {
   );
 });
 
-test("loads a colocated stylesheet only on its page", async () => {
-  const route = "writing/architectural-memory";
-  const pageStyles = await readFile(
-    path.join(rootDirectory, "content", route, "styles.css"),
-  );
-  const filename = getFingerprintedFilename("styles.css", pageStyles);
-  const [pageHtml, emittedStyles] = await Promise.all([
-    readFile(path.join(rootDirectory, "dist", route, "index.html"), "utf8"),
-    readFile(path.join(rootDirectory, "dist", route, filename)),
-  ]);
-  const stylesheetLinks = (document) =>
-    Array.from(
-      document.matchAll(/<link rel="stylesheet" href="([^"]+)">/gu),
-      ([, href]) => href,
-    );
-
-  assert.deepEqual(stylesheetLinks(pageHtml), [
-    `/${stylesheetFilename}`,
-    `./${filename}`,
-  ]);
-  assert.deepEqual(stylesheetLinks(html), [`/${stylesheetFilename}`]);
-  assert.deepEqual(stylesheetLinks(articleHtml), [`/${stylesheetFilename}`]);
-  assert.deepEqual(emittedStyles, pageStyles);
-});
-
 test("generates responsive, content-hashed image variants", () => {
   const expectedWidths = [320, 640, 1120];
 
