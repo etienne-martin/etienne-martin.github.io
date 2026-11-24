@@ -30,6 +30,7 @@ const contentTypes = new Map([
   [".svg", "image/svg+xml"],
   [".wav", "audio/wav"],
   [".webp", "image/webp"],
+  [".woff2", "font/woff2"],
 ]);
 
 let rebuildTimer;

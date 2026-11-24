@@ -470,7 +470,7 @@ function renderHtml(
   page,
   content,
   copyrightYear,
-  stylesheetHref,
+  stylesheetHrefs,
   faviconHref,
   socialImage,
 ) {
@@ -511,6 +511,9 @@ function renderHtml(
     <meta name="twitter:image" content="${socialImageUrl}">
     <meta name="twitter:image:alt" content="${socialImageAlt}">`
     : "";
+  const stylesheetLinks = stylesheetHrefs
+    .map((href) => `    <link rel="stylesheet" href="${escapeAttribute(href)}">`)
+    .join("\n");
   const navigation =
     page.route === "/"
       ? ""
@@ -538,7 +541,7 @@ ${renderMarkdown("[Home](/)\n").trimEnd()}
     <title>${title}</title>
     <link rel="canonical" href="${pageUrl}">
     <link rel="icon" href="${faviconHref}" type="image/svg+xml">
-    <link rel="stylesheet" href="${stylesheetHref}">
+${stylesheetLinks}
   </head>
   <body>
     <main>
@@ -1112,8 +1115,14 @@ export async function build({ silent = false } = {}) {
   );
   await Promise.all(
     pages.map(async (page) => {
+      const resolveAssetUrl = createPageAssetResolver(page, assetsBySourcePath);
+      const stylesheetHrefs = [stylesheetHref];
+      const pageStylesheet = resolveAssetUrl("./styles.css");
+      if (pageStylesheet !== "./styles.css") {
+        stylesheetHrefs.push(pageStylesheet);
+      }
       const content = renderMarkdown(page.source, {
-        resolveAssetUrl: createPageAssetResolver(page, assetsBySourcePath),
+        resolveAssetUrl,
         resolveImageAsset: createPageImageResolver(
           page,
           assetsBySourcePath,
@@ -1124,7 +1133,7 @@ export async function build({ silent = false } = {}) {
         page,
         content,
         copyrightYear,
-        stylesheetHref,
+        stylesheetHrefs,
         faviconHref,
         socialImagesByPageSourcePath.get(page.sourcePath),
       );
